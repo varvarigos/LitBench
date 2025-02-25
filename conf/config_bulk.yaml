@@ -1,0 +1,25 @@
+eval:
+  base_model: meta-llama/Llama-3.2-1B
+  graph_path: datasets/quantum_graph.gexf
+  model_name: llama_1b_qlora_uncensored
+
+train:
+  tokenizer:
+    max_length: 1024
+  qlora:
+    rank: 8
+    lora_alpha: 32
+    lora_dropout: 0.05
+    target_modules:  # modules for which to train lora adapters
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    #- gate_proj
+    #- up_proj
+    #- down_proj
+  trainer_output_dir: trainer_outputs/
+  model_output_dir: models
+  model_name: llama_1b_qlora_uncensored
+  graph_path: datasets/quantum_graph.gexf
+  base_model: meta-llama/Llama-3.2-1B

@@ -1,0 +1,92 @@
+from transformers import AutoTokenizer, AutoModel
+from sklearn.metrics.pairwise import cosine_similarity
+import json
+import torch
+from tqdm import tqdm
+import os
+import pandas as pd
+import numpy as np
+
+
+
+def generate_topic_level_embeddings(model, tokenizer, paper_list, tmp_id_2_abs):
+    for topic_level in ['Level 1', 'Level 2', 'Level 3']:
+        i = 0
+        batch_size = 2048
+        candidate_emb_list = []
+        pbar = tqdm(total=len(paper_list))
+        while i < len(paper_list):
+            yield i / len(paper_list) / 3 if topic_level == 'Level 1' else 0.33 + i / len(paper_list) / 3 if topic_level == 'Level 2' else 0.66 + i / len(paper_list) / 3
+            paper_batch = paper_list[i:i+batch_size]
+            paper_text_batch = []
+            for paper_id in paper_batch:
+                topics = tmp_id_2_abs[paper_id][topic_level]
+                topic_text = ''
+                for t in topics:
+                    topic_text += t + ','
+                paper_text_batch.append(topic_text)
+            inputs = tokenizer(paper_text_batch, return_tensors='pt', padding=True, truncation=True)
+            with torch.no_grad():
+                outputs = model(**inputs.to('cuda'))
+                candidate_embeddings = outputs.last_hidden_state[:, 0, :].cpu()
+                candidate_embeddings = candidate_embeddings.reshape(-1, 1024)
+                candidate_emb_list.append(candidate_embeddings)
+
+                i += len(candidate_embeddings)
+                pbar.update(len(candidate_embeddings))
+
+        all_candidate_embs = torch.cat(candidate_emb_list, 0)
+        
+        df = pd.DataFrame({
+            "paper_id": paper_list,
+            "embedding": list(all_candidate_embs.numpy())
+        })
+
+        df.to_parquet(f'datasets/topic_level_embeds/{topic_level}_emb.parquet', engine='pyarrow', compression='snappy')
+
+    yield 1.0
+
+
+
+def retriever(query, retrieval_nodes_path, inference):
+    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
+    tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-large-en-v1.5")
+    model = AutoModel.from_pretrained("BAAI/bge-large-en-v1.5").to(device='cuda', dtype=torch.float16)
+    inputs = tokenizer([query], return_tensors='pt', padding=True, truncation=True)
+    with torch.no_grad():
+        outputs = model(**inputs.to('cuda'))
+        query_embeddings = outputs.last_hidden_state[:, 0, :].cpu()
+    
+    with open("datasets/final_topics_refined.json",'r', encoding='UTF-8') as f:
+        tmp_id_2_abs = json.load(f)
+    paper_list = list(tmp_id_2_abs.keys())
+    
+    if not inference:
+        yield from generate_topic_level_embeddings(model, tokenizer, paper_list, tmp_id_2_abs)
+
+    paper_list = pd.read_parquet('datasets/topic_level_embeds/Level 1_emb.parquet')['paper_id'].tolist()
+    all_candidate_embs_L1 = torch.tensor(np.array(pd.read_parquet('datasets/topic_level_embeds/Level 1_emb.parquet')['embedding'].tolist())).half()
+    all_candidate_embs_L2 = torch.tensor(np.array(pd.read_parquet('datasets/topic_level_embeds/Level 2_emb.parquet')['embedding'].tolist())).half()
+    all_candidate_embs_L3 = torch.tensor(np.array(pd.read_parquet('datasets/topic_level_embeds/Level 3_emb.parquet')['embedding'].tolist())).half()
+    all_candidate_embs = all_candidate_embs_L1 + all_candidate_embs_L2 + all_candidate_embs_L3
+    
+    similarity_scores = cosine_similarity(query_embeddings, all_candidate_embs)[0]
+
+
+    id_score_list = []
+    for i in range(len(paper_list)):
+        id_score_list.append([paper_list[i], similarity_scores[i]])
+    
+    sorted_scores = sorted(id_score_list, key=lambda i: i[-1], reverse = True)
+    top_K_paper = [sample[0] for sample in sorted_scores[:30000]]
+    print(top_K_paper)
+
+    papers_results = {
+        paper: True
+        for paper in top_K_paper
+    }
+
+    with open(retrieval_nodes_path, 'w') as f:
+        json.dump(papers_results, f)
+    
