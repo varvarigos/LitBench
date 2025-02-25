@@ -165,7 +165,6 @@ class QloraTrainer_CS:
     def _process_data_instruction(self):
         context_window = self.tokenizer.model_max_length
         if self.use_predefined_graph:
-            print("HERE BROOO")
             print(self.config["directories"]["predefined_graph_path"])
             graph_data = nx.read_gexf(self.config["directories"]["predefined_graph_path"], node_type=None, relabel=False, version='1.2draft')
         else:
