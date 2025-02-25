@@ -26,7 +26,6 @@ import wandb
 import gradio as gr
 from transformers import AutoModelForCausalLM, AutoTokenizer, StoppingCriteriaList, TextIteratorStreamer
 from threading import Thread
-from huggingface_hub import login
 import signal
 import gzip
 import time
@@ -56,6 +55,40 @@ def update_button_styles(selected_task):
 
 # Fetch and store arXiv source files
 def fetch_arxiv_papers(papers):
+    # Download the arXiv metadata file if it doesn't exist
+    dataset = 'datasets/arxiv-metadata-oai-snapshot.json'
+    data = []
+    if not os.path.exists(dataset):
+        os.system("wget https://huggingface.co/spaces/ddiddu/simsearch/resolve/main/arxiv-metadata-oai-snapshot.json -P ./datasets")
+
+    with open(dataset, 'r') as f:
+        for line in f: 
+            data.append(json.loads(line))
+
+    papers = [d for d in data]
+    paper_ids = [d['id'] for d in data]
+    paper_titles = [
+        (
+            re.sub(r' +', ' ', re.sub(r'[\n]+', ' ', paper['title']))
+            .replace("\\emph", "")
+            .replace("\\emp", "")
+            .replace("\\em", "")
+            .replace(",", "")
+            .replace("{", "")
+            .replace("}", "")
+            .strip(".")
+            .strip()
+            .strip(".")
+            .lower()
+        )
+        for paper in papers
+    ]
+    paper_dict = {
+        k:v
+        for k,v in zip(paper_titles, paper_ids)
+    }
+
+
     total_papers = len(papers)
     download_progress_bar=gr.Progress()
     
@@ -338,7 +371,6 @@ def predict(message, history, selected_task):
             else:
                 prompt = conversation + f"<human>: {message}\n<bot>:"
 
-            print(prompt)
             if selected_task != "Influential Papers Recommendation":
                 model_inputs = tokenizer(prompt, return_tensors="pt").to(device)
                 generate_kwargs["inputs"] = model_inputs["input_ids"]
@@ -509,40 +541,9 @@ if __name__ == "__main__":
     template = json.load(open(template_file_path, "r"))
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    dataset = 'datasets/arxiv-metadata-oai-snapshot.json'
-    data = []
-    with open(dataset, 'r') as f:
-        for line in f: 
-            data.append(json.loads(line))
-
-
-    papers = [d for d in data]
-    paper_ids = [d['id'] for d in data]
-    paper_titles = [
-        (
-            re.sub(r' +', ' ', re.sub(r'[\n]+', ' ', paper['title']))
-            .replace("\\emph", "")
-            .replace("\\emp", "")
-            .replace("\\em", "")
-            .replace(",", "")
-            .replace("{", "")
-            .replace("}", "")
-            .strip(".")
-            .strip()
-            .strip(".")
-            .lower()
-        )
-        for paper in papers
-    ]
-    paper_dict = {
-        k:v
-        for k,v in zip(paper_titles, paper_ids)
-    }
-
 
     seed_no = config['processing']['random_seed']
     model_name = config['base_model']
-    max_papers = config['processing']['max_papers']
     save_zip_directory = config['directories']['save_zip_directory']
     save_directory = config['directories']['save_directory']
     save_description = config['directories']['save_description']
