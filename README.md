@@ -1,4 +1,4 @@
-<img src="img/litbench_interface.jpeg" alt="LitBench Interface" width="800">
+<img src="img/litbench_interface.jpeg" alt="LitBench Interface" width="1000">
 
 # LitBench: A Large Language Model Benchmarking Framework For Literature Tasks
 
