@@ -40,7 +40,7 @@ git clone <repository_url>
 cd litbench
 
 # Create a virtual environment
-python -m venv litbench
+python3.10 -m venv litbench
 
 # Activate the virtual environment
 source litbench/bin/activate  # On macOS/Linux
@@ -48,6 +48,17 @@ litbench\Scripts\activate  # On Windows
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Token setup for Hugging Face
+huggingface-cli login
+```
+
+### Downloading topics refined dataset [`AliMaatouk/arXiv_Topics`](https://huggingface.co/datasets/AliMaatouk/arXiv_Topics) from Hugging Face, which provides a structured mapping of arXiv papers to hierarchical topic categories.
+
+```bash
+# Download the topics refined dataset
+cd litbench/datasets/
+wget https://huggingface.co/datasets/AliMaatouk/arXiv_Topics/resolve/main/arxiv_topics.json
 ```
 
 ## Usage
@@ -91,15 +102,3 @@ To format your input correctly, refer to the corresponding `.md` file for each t
 - **Influential Papers Recommendation** → [`influential_papers.md`](docs/tasks/influential_papers.md)
 
 If no task is selected, the model will run a **general inference process**, responding freely based on the user's prompt.
-
-## Citation
-
-If you use LitBench in your research, please cite our work:
-
-```bibtex
-@misc{litbench2025,
-  title={LitBench: A Large Language Model Benchmarking Framework For Literature Tasks},
-  author={Your Name and Co-authors},
-  year={2025}
-}
-```
