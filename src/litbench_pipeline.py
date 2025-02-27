@@ -445,7 +445,7 @@ def predict(message, history, selected_task):
                     for key, value in data_graph.items()
                 }
 
-                with open("datasets/final_topics_refined.json", "r") as f:
+                with open("datasets/arxiv_topics.json", "r") as f:
                     concept_data = json.load(f)
                 papers = {d['id']: d for d in data}
 
