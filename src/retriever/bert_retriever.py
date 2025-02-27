@@ -41,6 +41,9 @@ def generate_topic_level_embeddings(model, tokenizer, paper_list, tmp_id_2_abs):
             "paper_id": paper_list,
             "embedding": list(all_candidate_embs.numpy())
         })
+        
+        if not os.path.exists('datasets/topic_level_embeds'):
+            os.makedirs('datasets/topic_level_embeds')
 
         df.to_parquet(f'datasets/topic_level_embeds/{topic_level}_emb.parquet', engine='pyarrow', compression='snappy')
 
