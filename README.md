@@ -53,7 +53,9 @@ pip install -r requirements.txt
 huggingface-cli login
 ```
 
-### Downloading topics refined dataset [`AliMaatouk/arXiv_Topics`](https://huggingface.co/datasets/AliMaatouk/arXiv_Topics) from Hugging Face, which provides a structured mapping of arXiv papers to hierarchical topic categories.
+### Downloading topics refined dataset
+
+The dataset [`AliMaatouk/arXiv_Topics`](https://huggingface.co/datasets/AliMaatouk/arXiv_Topics) from Hugging Face provides a structured mapping of arXiv papers to hierarchical topic categories.
 
 ```bash
 # Download the topics refined dataset
