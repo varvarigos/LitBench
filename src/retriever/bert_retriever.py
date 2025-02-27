@@ -58,7 +58,7 @@ def retriever(query, retrieval_nodes_path, inference):
         outputs = model(**inputs.to('cuda'))
         query_embeddings = outputs.last_hidden_state[:, 0, :].cpu()
     
-    with open("datasets/final_topics_refined.json",'r', encoding='UTF-8') as f:
+    with open("datasets/arxiv_topics.json",'r', encoding='UTF-8') as f:
         tmp_id_2_abs = json.load(f)
     paper_list = list(tmp_id_2_abs.keys())
     
