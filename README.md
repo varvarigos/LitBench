@@ -1,4 +1,4 @@
-<img src="img/litbench_interface.jpeg" alt="LitBench Interface" width="720">
+<img src="img/litbench_interface.jpeg" alt="LitBench Interface" width="800">
 
 # LitBench: A Large Language Model Benchmarking Framework For Literature Tasks
 
@@ -55,7 +55,7 @@ huggingface-cli login
 
 ### Downloading topics refined dataset
 
-The dataset [`AliMaatouk/arXiv_Topics`](https://huggingface.co/datasets/AliMaatouk/arXiv_Topics) from Hugging Face provides a structured mapping of arXiv papers to hierarchical topic categories.
+The dataset [`AliMaatouk/arXiv_Topics`](https://huggingface.co/datasets/AliMaatouk/arXiv_Topics) from Hugging Face provides a structured mapping of arXiv papers to hierarchical topic categories. We provide an embedding representation of this dataset in [`AliMaatouk/arXiv-Topics-Embeddings`](https://huggingface.co/datasets/AliMaatouk/arXiv-Topics-Embeddings).
 
 ```bash
 # Download the topics refined dataset
