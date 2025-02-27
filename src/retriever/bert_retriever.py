@@ -46,7 +46,19 @@ def generate_topic_level_embeddings(model, tokenizer, paper_list, tmp_id_2_abs):
             os.makedirs('datasets/topic_level_embeds')
 
         df.to_parquet(f'datasets/topic_level_embeds/{topic_level}_emb.parquet', engine='pyarrow', compression='snappy')
-
+        
+    all_candidate_embs_L1 = torch.tensor(np.array(pd.read_parquet('datasets/topic_level_embeds/Level 1_emb.parquet')['embedding'].tolist())).half()
+    all_candidate_embs_L2 = torch.tensor(np.array(pd.read_parquet('datasets/topic_level_embeds/Level 2_emb.parquet')['embedding'].tolist())).half()
+    all_candidate_embs_L3 = torch.tensor(np.array(pd.read_parquet('datasets/topic_level_embeds/Level 3_emb.parquet')['embedding'].tolist())).half()
+    all_candidate_embs = all_candidate_embs_L1 + all_candidate_embs_L2 + all_candidate_embs_L3
+    
+    df = pd.DataFrame({
+        "paper_id": paper_list,
+        "embedding": list(all_candidate_embs.numpy())
+    })
+    
+    df.to_parquet('datasets/topic_level_embeds/arxiv_papers_embeds.parquet', engine='pyarrow', compression='snappy')
+    
     yield 1.0
 
 
@@ -60,23 +72,24 @@ def retriever(query, retrieval_nodes_path, inference):
     with torch.no_grad():
         outputs = model(**inputs.to('cuda'))
         query_embeddings = outputs.last_hidden_state[:, 0, :].cpu()
-    
+
     with open("datasets/arxiv_topics.json",'r', encoding='UTF-8') as f:
         tmp_id_2_abs = json.load(f)
     paper_list = list(tmp_id_2_abs.keys())
     
-    if not inference:
+    # if the file does not exist
+    if not os.path.exists('datasets/topic_level_embeds/arxiv_papers_embeds.parquet'):
         yield from generate_topic_level_embeddings(model, tokenizer, paper_list, tmp_id_2_abs)
 
-    paper_list = pd.read_parquet('datasets/topic_level_embeds/Level 1_emb.parquet')['paper_id'].tolist()
-    all_candidate_embs_L1 = torch.tensor(np.array(pd.read_parquet('datasets/topic_level_embeds/Level 1_emb.parquet')['embedding'].tolist())).half()
-    all_candidate_embs_L2 = torch.tensor(np.array(pd.read_parquet('datasets/topic_level_embeds/Level 2_emb.parquet')['embedding'].tolist())).half()
-    all_candidate_embs_L3 = torch.tensor(np.array(pd.read_parquet('datasets/topic_level_embeds/Level 3_emb.parquet')['embedding'].tolist())).half()
-    all_candidate_embs = all_candidate_embs_L1 + all_candidate_embs_L2 + all_candidate_embs_L3
-    
+    all_candidate_embs = torch.tensor(np.array(pd.read_parquet('datasets/topic_level_embeds/arxiv_papers_embeds.parquet')['embedding'].tolist())).half()
+    paper_list = pd.read_parquet('datasets/topic_level_embeds/arxiv_papers_embeds.parquet')['paper_id'].tolist()
+
+
+    # Calculate the cosine similarity between the query and all candidate embeddings    
     similarity_scores = cosine_similarity(query_embeddings, all_candidate_embs)[0]
+    
 
-
+    # Sort the papers by similarity scores and select the top K papers
     id_score_list = []
     for i in range(len(paper_list)):
         id_score_list.append([paper_list[i], similarity_scores[i]])
