@@ -19,6 +19,8 @@ directories:
   save_zip_directory: "quant_bio_retrieval/research_papers_zip/"
   save_directory: "quant_bio_retrieval/research_papers/"
   save_description: "quant_bio_retrieval/description/"
+  save_graph: "quant_bio_retrieval/description/test_graph.gexf"
+  gexf_file: "quant_bio_retrieval/description/test_graph.gexf"
   metadata_path: "arxiv-metadata-oai-snapshot.json"
   retrieval_nodes_path: "datasets/retrieval_nodes.json"
   predefined_graph_path: "datasets/bio_noai.gexf"
