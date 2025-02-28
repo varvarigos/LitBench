@@ -31,6 +31,7 @@ import gzip
 import time
 import torch
 from peft.peft_model import PeftModel
+from datasets import load_dataset
 
 
 
@@ -411,7 +412,7 @@ def predict(message, history, selected_task):
             yield "📥 Retrieving relevant papers..."
 
             retrieve_progress = gr.Progress()
-            for percent in retriever(message, retrieval_nodes_path, inference=False):
+            for percent in retriever(message, retrieval_nodes_path):
                 retrieve_progress(percent)
 
             with open(retrieval_nodes_path, "r") as f:
@@ -444,9 +445,13 @@ def predict(message, history, selected_task):
                     "/".join(re.match(r"([a-z-]+)([0-9]+)", key, re.I).groups()) if re.match(r"([a-z-]+)([0-9]+)", key, re.I) else key: value
                     for key, value in data_graph.items()
                 }
-
-                with open("datasets/arxiv_topics.json", "r") as f:
-                    concept_data = json.load(f)
+                
+                concept_data = load_dataset("json", data_files="datasets/arxiv_topics.jsonl")
+                id2topics = {
+                    entry["paper_id"]: [entry["Level 1"], entry["Level 2"], entry["Level 3"]]
+                    for entry in concept_data["train"]
+                }
+                
                 papers = {d['id']: d for d in data}
 
                 G = nx.DiGraph()
@@ -458,7 +463,7 @@ def predict(message, history, selected_task):
                             abstract=papers[k]['abstract'],
                             introduction=renamed_data[k].get('Introduction', '') if renamed_data[k].get('Introduction', '') != '\n' else '',
                             related=renamed_data[k].get('Related Work', '') if renamed_data[k].get('Related Work', '') != '\n' else '',
-                            concepts=", ".join(list(set(item for sublist in concept_data[k].values() for item in sublist))) if k in concept_data else ''
+                            concepts=", ".join(list(set(item for sublist in id2topics[k] for item in sublist))) if k in id2topics else ''
                         )
                     if 'Citations' in renamed_data[k]:
                         for citation in renamed_data[k]['Citations']:
