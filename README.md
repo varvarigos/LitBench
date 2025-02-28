@@ -28,7 +28,7 @@ Our results demonstrate that **small, domain-specific LLMs trained on LitBench d
 
 ## Topics refined dataset
 
-The dataset [`AliMaatouk/arXiv_Topics`](https://huggingface.co/datasets/AliMaatouk/arXiv_Topics) from Hugging Face provides a structured mapping of arXiv papers to hierarchical topic categories. We provide an embedding representation of this dataset in [`AliMaatouk/arXiv-Topics-Embeddings`](https://huggingface.co/datasets/AliMaatouk/arXiv-Topics-Embeddings).
+The dataset [`arXiv_Topics`](https://huggingface.co/datasets/AliMaatouk/arXiv_Topics) from Hugging Face provides a structured mapping of arXiv papers to hierarchical topic categories. We provide an embedding representation of this dataset in [`arXiv-Topics-Embeddings`](https://huggingface.co/datasets/AliMaatouk/arXiv-Topics-Embeddings).
 
 
 ## Installation
