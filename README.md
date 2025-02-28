@@ -60,11 +60,11 @@ The dataset [`AliMaatouk/arXiv_Topics`](https://huggingface.co/datasets/AliMaato
 ```bash
 # Download the topics refined dataset
 cd litbench/datasets/
-wget https://huggingface.co/datasets/AliMaatouk/arXiv_Topics/resolve/main/arxiv_topics.json
+wget https://huggingface.co/datasets/AliMaatouk/arXiv_Topics/resolve/main/arxiv_topics.jsonl
 
 mkdir topic_level_embeds # if not already created
 cd topic_level_embeds
-wget https://huggingface.co/datasets/AliMaatouk/arXiv-Topics-Embeddings/resolve/main/arxiv_papers_embeds.json
+wget https://huggingface.co/datasets/AliMaatouk/arXiv-Topics-Embeddings/resolve/main/arxiv_papers_embeds.parquet
 ```
 
 ## Usage
