@@ -55,7 +55,7 @@ def update_button_styles(selected_task):
 
 
 # Fetch and store arXiv source files
-def fetch_arxiv_papers(papers):
+def fetch_arxiv_papers(papers_to_download):
     # Download the arXiv metadata file if it doesn't exist
     dataset = 'datasets/arxiv-metadata-oai-snapshot.json'
     data = []
@@ -90,7 +90,7 @@ def fetch_arxiv_papers(papers):
     }
 
 
-    total_papers = len(papers)
+    total_papers = len(papers_to_download)
     download_progress_bar=gr.Progress()
     
     llm_resp = []
@@ -107,7 +107,7 @@ def fetch_arxiv_papers(papers):
     num_papers, num_edges, t, iter_ind = 0, 0, 0, 0
     graph = {}
 
-    for paper_name in tqdm(papers):
+    for paper_name in tqdm(papers_to_download):
         results["Number of papers"] += 1
         print(
             Fore.BLUE + "Number of papers processed: {} \n Number of edges found: {} \n Time of previous iter: {} \n Now processing paper: {} \n\n"
@@ -234,7 +234,6 @@ def fetch_arxiv_papers(papers):
                 if intro  != '':
                     graph[paper_name]['Introduction'] = intro
                     results["Number of introductions found"] += 1
-
 
                 # Extract citation sentences from the introduction and related works
                 sentences_citing = get_citing_sentences(intro + '\n' + related_works)
@@ -451,7 +450,14 @@ def predict(message, history, selected_task):
                     entry["paper_id"]: [entry["Level 1"], entry["Level 2"], entry["Level 3"]]
                     for entry in concept_data["train"]
                 }
-                
+
+                dataset = 'datasets/arxiv-metadata-oai-snapshot.json'
+                data = []
+                if not os.path.exists(dataset):
+                    os.system("wget https://huggingface.co/spaces/ddiddu/simsearch/resolve/main/arxiv-metadata-oai-snapshot.json -P ./datasets")
+                with open(dataset, 'r') as f:
+                    for line in f: 
+                        data.append(json.loads(line))
                 papers = {d['id']: d for d in data}
 
                 G = nx.DiGraph()
@@ -553,8 +559,8 @@ if __name__ == "__main__":
     save_directory = config['directories']['save_directory']
     save_description = config['directories']['save_description']
     save_path = save_description + 'results.json'
-    save_graph = save_description + 'graph.json'
-    gexf_file = save_description + 'test_graph.gexf'
+    save_graph = config['directories']['save_graph']
+    gexf_file = config['directories']['gexf_file']
     retrieval_nodes_path = config['directories']['retrieval_nodes_path']
     predef_graph = config['directories']['predefined_graph_path']
 
