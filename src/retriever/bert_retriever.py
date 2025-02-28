@@ -6,10 +6,15 @@ from tqdm import tqdm
 import os
 import pandas as pd
 import numpy as np
-
+from datasets import load_dataset
 
 
 def generate_topic_level_embeddings(model, tokenizer, paper_list, tmp_id_2_abs):
+    id2topics = {
+        entry["paper_id"]: [entry["Level 1"], entry["Level 2"], entry["Level 3"]]
+        for entry in tmp_id_2_abs
+    }
+
     for topic_level in ['Level 1', 'Level 2', 'Level 3']:
         i = 0
         batch_size = 2048
@@ -20,7 +25,7 @@ def generate_topic_level_embeddings(model, tokenizer, paper_list, tmp_id_2_abs):
             paper_batch = paper_list[i:i+batch_size]
             paper_text_batch = []
             for paper_id in paper_batch:
-                topics = tmp_id_2_abs[paper_id][topic_level]
+                topics = id2topics[paper_id][int(topic_level[6])-1]
                 topic_text = ''
                 for t in topics:
                     topic_text += t + ','
@@ -59,30 +64,30 @@ def generate_topic_level_embeddings(model, tokenizer, paper_list, tmp_id_2_abs):
     
     df.to_parquet('datasets/topic_level_embeds/arxiv_papers_embeds.parquet', engine='pyarrow', compression='snappy')
     
-    yield 1.0
 
 
-
-def retriever(query, retrieval_nodes_path, inference):
+def retriever(query, retrieval_nodes_path):
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
+    
+    yield 0
     tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-large-en-v1.5")
     model = AutoModel.from_pretrained("BAAI/bge-large-en-v1.5").to(device='cuda', dtype=torch.float16)
     inputs = tokenizer([query], return_tensors='pt', padding=True, truncation=True)
     with torch.no_grad():
         outputs = model(**inputs.to('cuda'))
         query_embeddings = outputs.last_hidden_state[:, 0, :].cpu()
-
-    with open("datasets/arxiv_topics.json",'r', encoding='UTF-8') as f:
-        tmp_id_2_abs = json.load(f)
-    paper_list = list(tmp_id_2_abs.keys())
+    
+    # Load the dataset
+    tmp_id_2_abs = load_dataset("json", data_files="datasets/arxiv_topics.jsonl")
+    tmp_id_2_abs = tmp_id_2_abs['train']
+    paper_list = list(tmp_id_2_abs['paper_id'])
     
     # if the file does not exist
     if not os.path.exists('datasets/topic_level_embeds/arxiv_papers_embeds.parquet'):
         yield from generate_topic_level_embeddings(model, tokenizer, paper_list, tmp_id_2_abs)
-
-    all_candidate_embs = torch.tensor(np.array(pd.read_parquet('datasets/topic_level_embeds/arxiv_papers_embeds.parquet')['embedding'].tolist())).half()
-    paper_list = pd.read_parquet('datasets/topic_level_embeds/arxiv_papers_embeds.parquet')['paper_id'].tolist()
+        
+    all_candidate_embs = load_dataset("parquet", data_files="datasets/topic_level_embeds/arxiv_papers_embeds.parquet")['train']
 
 
     # Calculate the cosine similarity between the query and all candidate embeddings    
@@ -106,3 +111,4 @@ def retriever(query, retrieval_nodes_path, inference):
     with open(retrieval_nodes_path, 'w') as f:
         json.dump(papers_results, f)
     
+    yield 1.0
