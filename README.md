@@ -13,7 +13,6 @@ LitBench is designed with **flexibility** in mind, supporting the curation of **
 Our results demonstrate that **small, domain-specific LLMs trained on LitBench datasets achieve competitive performance** compared to state-of-the-art models like **GPT-4 and DeepSeek-R1** on literature-related tasks. To enhance accessibility and usability, we open-source the framework alongside an **AI agent tool** that streamlines **data curation, model training, and evaluation**.
 
 
-
 ## Key Features:
 
 - **Domain-Specific Adaptation**: Constructs **literature sub-graphs** and **training datasets** by extracting textual attributes from academic literature.
@@ -25,6 +24,12 @@ Our results demonstrate that **small, domain-specific LLMs trained on LitBench d
 - **Flexible and Scalable**: Supports literature graph curation across **both broad domains and specialized research areas**.
   
 - **Open-Source and Accessible**: Includes an **AI agent tool** to streamline **data curation, model training, and evaluation**.
+
+
+## Topics refined dataset
+
+The dataset [`AliMaatouk/arXiv_Topics`](https://huggingface.co/datasets/AliMaatouk/arXiv_Topics) from Hugging Face provides a structured mapping of arXiv papers to hierarchical topic categories. We provide an embedding representation of this dataset in [`AliMaatouk/arXiv-Topics-Embeddings`](https://huggingface.co/datasets/AliMaatouk/arXiv-Topics-Embeddings).
+
 
 ## Installation
 
@@ -51,20 +56,6 @@ pip install -r requirements.txt
 
 # Token setup for Hugging Face
 huggingface-cli login
-```
-
-### Downloading topics refined dataset
-
-The dataset [`AliMaatouk/arXiv_Topics`](https://huggingface.co/datasets/AliMaatouk/arXiv_Topics) from Hugging Face provides a structured mapping of arXiv papers to hierarchical topic categories. We provide an embedding representation of this dataset in [`AliMaatouk/arXiv-Topics-Embeddings`](https://huggingface.co/datasets/AliMaatouk/arXiv-Topics-Embeddings).
-
-```bash
-# Download the topics refined dataset
-cd litbench/datasets/
-wget https://huggingface.co/datasets/AliMaatouk/arXiv_Topics/resolve/main/arxiv_topics.jsonl
-
-mkdir topic_level_embeds # if not already created
-cd topic_level_embeds
-wget https://huggingface.co/datasets/AliMaatouk/arXiv-Topics-Embeddings/resolve/main/arxiv_papers_embeds.parquet
 ```
 
 ## Usage
