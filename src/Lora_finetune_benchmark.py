@@ -168,7 +168,7 @@ class QloraTrainer_CS:
             print(self.config["directories"]["predefined_graph_path"])
             graph_data = nx.read_gexf(self.config["directories"]["predefined_graph_path"], node_type=None, relabel=False, version='1.2draft')
         else:
-            graph_data = nx.read_gexf(self.config["directories"]["save_description"] + "test_graph.gexf", node_type=None, relabel=False, version='1.2draft')
+            graph_data = nx.read_gexf(self.config["directories"]["gexf_file"], node_type=None, relabel=False, version='1.2draft')
         raw_graph = graph_data
 
         test_set_size = len(graph_data.nodes()) // 10
