@@ -497,7 +497,11 @@ def predict(message, history, selected_task):
 
             wandb.init(project='qlora_train')
             index = 1
-            trainer = QloraTrainer_CS(config=config, index=index, use_predefined_graph=~download_papers.value)
+
+            if download_papers.value:
+                trainer = QloraTrainer_CS(config=config, index=index, use_predefined_graph=False)
+            else:
+                trainer = QloraTrainer_CS(config=config, index=index, use_predefined_graph=True)
 
             print("Load base model")
             trainer.load_base_model()
