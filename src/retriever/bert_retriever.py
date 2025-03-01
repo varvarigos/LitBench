@@ -12,7 +12,7 @@ from datasets import load_dataset
 def generate_topic_level_embeddings(model, tokenizer, paper_list, tmp_id_2_abs):
     id2topics = {
         entry["paper_id"]: [entry["Level 1"], entry["Level 2"], entry["Level 3"]]
-        for entry in tmp_id_2_abs
+        for entry in tmp_id_2_abs['train']
     }
 
     for topic_level in ['Level 1', 'Level 2', 'Level 3']:
@@ -52,9 +52,9 @@ def generate_topic_level_embeddings(model, tokenizer, paper_list, tmp_id_2_abs):
 
         df.to_parquet(f'datasets/topic_level_embeds/{topic_level}_emb.parquet', engine='pyarrow', compression='snappy')
         
-    all_candidate_embs_L1 = torch.tensor(np.array(pd.read_parquet('datasets/topic_level_embeds/Level 1_emb.parquet')['embedding'].tolist())).half()
-    all_candidate_embs_L2 = torch.tensor(np.array(pd.read_parquet('datasets/topic_level_embeds/Level 2_emb.parquet')['embedding'].tolist())).half()
-    all_candidate_embs_L3 = torch.tensor(np.array(pd.read_parquet('datasets/topic_level_embeds/Level 3_emb.parquet')['embedding'].tolist())).half()
+    all_candidate_embs_L1 = torch.tensor(np.array(pd.read_parquet('datasets/topic_level_embeds/Level 1_emb.parquet')['embedding'].tolist()))
+    all_candidate_embs_L2 = torch.tensor(np.array(pd.read_parquet('datasets/topic_level_embeds/Level 2_emb.parquet')['embedding'].tolist()))
+    all_candidate_embs_L3 = torch.tensor(np.array(pd.read_parquet('datasets/topic_level_embeds/Level 3_emb.parquet')['embedding'].tolist()))
     all_candidate_embs = all_candidate_embs_L1 + all_candidate_embs_L2 + all_candidate_embs_L3
     
     df = pd.DataFrame({
@@ -80,17 +80,20 @@ def retriever(query, retrieval_nodes_path):
     
     # Load the dataset
     tmp_id_2_abs = load_dataset("json", data_files="datasets/arxiv_topics.jsonl")
-    tmp_id_2_abs = tmp_id_2_abs['train']
-    paper_list = list(tmp_id_2_abs['paper_id'])
+    paper_list = list(tmp_id_2_abs['train']['paper_id'])
     
     # if the file does not exist
     if not os.path.exists('datasets/topic_level_embeds/arxiv_papers_embeds.parquet'):
         yield from generate_topic_level_embeddings(model, tokenizer, paper_list, tmp_id_2_abs)
-        
-    all_candidate_embs = load_dataset("parquet", data_files="datasets/topic_level_embeds/arxiv_papers_embeds.parquet")['train']
 
+    dataset = load_dataset("AliMaatouk/arXiv-Topics-Embeddings")["train"]
+    table = dataset.data  # Get PyArrow Table
+    all_candidate_embs = table.column("embedding").to_numpy()
+    all_candidate_embs =  np.stack(all_candidate_embs)
+    all_candidate_embs = np.stack(all_candidate_embs)
 
-    # Calculate the cosine similarity between the query and all candidate embeddings    
+    # Calculate the cosine similarity between the query and all candidate embeddings
+    query_embeddings = np.array(query_embeddings)
     similarity_scores = cosine_similarity(query_embeddings, all_candidate_embs)[0]
     
 
