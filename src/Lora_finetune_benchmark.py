@@ -239,7 +239,7 @@ class QloraTrainer_CS:
         for sample in tqdm(random.sample(edge_list, train_num)):
             source, target = sample[0], sample[1]
             source_title, source_abs = raw_id_2_title_abs[source]
-            target_title, target_abs = raw_id_2_title_abs[target]    
+            target_title, target_abs = raw_id_2_title_abs[target]
             # paper_retrieval prompt
             neighbors = list(nx.all_neighbors(raw_graph, source))
             sample_node_list = list(all_train_nodes - set(neighbors) - set([source]) - set([target]))
