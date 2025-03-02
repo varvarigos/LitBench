@@ -100,7 +100,7 @@ class QloraTrainer_CS:
     
     def train(self):        
         # Set up lora config or load pre-trained adapter
-        config = LoraConfig(
+        lora_config = LoraConfig(
             r=self.config['qlora']['rank'],
             lora_alpha=self.config['qlora']['lora_alpha'],
             target_modules=self.config['qlora']['target_modules'],
@@ -108,7 +108,7 @@ class QloraTrainer_CS:
             bias="none",
             task_type="CAUSAL_LM",
         )
-        model = get_peft_model(self.base_model, config)
+        model = get_peft_model(self.base_model, lora_config)
         self._print_trainable_parameters(model)
 
         print("Start data preprocessing")
@@ -121,17 +121,17 @@ class QloraTrainer_CS:
             model=model,
             train_dataset=train_data,
             args=transformers.TrainingArguments(
-                per_device_train_batch_size=4,
+                per_device_train_batch_size=self.config["training"]["per_device_train_batch_size"],
                 gradient_accumulation_steps=int(self.index),
-                warmup_steps=100,
-                num_train_epochs=1,
-                learning_rate=2e-4,
-                lr_scheduler_type='cosine',
-                fp16=True,
-                logging_steps=1,
+                warmup_steps=self.config["training"]["warmup_steps"],
+                num_train_epochs=self.config["training"]["num_train_epochs"],
+                learning_rate=self.config["training"]["learning_rate"],
+                lr_scheduler_type=self.config["training"]["lr_scheduler_type"],
+                fp16=self.config["training"]["fp16"],
+                logging_steps=self.config["training"]["logging_steps"],
                 output_dir=self.config["trainer_output_dir"],
                 report_to="wandb",
-                save_steps=50,
+                save_steps=self.config["training"]["save_steps"],
             ),
             data_collator=transformers.DataCollatorForLanguageModeling(self.tokenizer, mlm=False),
         )
