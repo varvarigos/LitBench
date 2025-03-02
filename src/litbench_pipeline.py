@@ -456,7 +456,7 @@ def predict(message, history, selected_task):
                 if not os.path.exists(dataset):
                     os.system("wget https://huggingface.co/spaces/ddiddu/simsearch/resolve/main/arxiv-metadata-oai-snapshot.json -P ./datasets")
                 with open(dataset, 'r') as f:
-                    for line in f: 
+                    for line in f:
                         data.append(json.loads(line))
                 papers = {d['id']: d for d in data}
 
@@ -464,8 +464,8 @@ def predict(message, history, selected_task):
                 for k in renamed_data:
                     if k not in G and k in papers:
                         G.add_node(
-                            k, 
-                            title=papers[k]['title'], 
+                            k,
+                            title=papers[k]['title'],
                             abstract=papers[k]['abstract'],
                             introduction=renamed_data[k].get('Introduction', '') if renamed_data[k].get('Introduction', '') != '\n' else '',
                             related=renamed_data[k].get('Related Work', '') if renamed_data[k].get('Related Work', '') != '\n' else '',
@@ -478,8 +478,8 @@ def predict(message, history, selected_task):
 
                             if target not in G and target in papers:
                                 G.add_node(
-                                    target, 
-                                    title=papers[target]['title'], 
+                                    target,
+                                    title=papers[target]['title'],
                                     abstract=papers[target]['abstract'],
                                     introduction=renamed_data[target].get('Introduction', '') if target in renamed_data and renamed_data[target].get('Introduction', '') != '\n'  else '',
                                     related=renamed_data[target].get('Related Work', '') if target in renamed_data and renamed_data[target].get('Related Work', '') != '\n'  else '',
@@ -508,35 +508,27 @@ def predict(message, history, selected_task):
 
 
             print("Start training")
-            progress_bar = None
-            train_end = False
-            def train_and_update():
-                nonlocal train_end
-                trainer.train()
-                train_end = True
-            
-            def update_progress(total_steps):
-                nonlocal train_end
-                nonlocal progress_bar
-                nonlocal training_progress
-                current_step = 0
-                while not train_end:
-                    current_step = trainer.transformer_trainer.state.global_step
-                    progress_bar = current_step / total_steps
+            def update_progress():
+                # Wait for the trainer to be initialized
+                while trainer.transformer_trainer is None:
                     time.sleep(0.5)
+
+                # Update the progress bar until training is complete
+                while trainer.transformer_trainer.state.global_step != trainer.transformer_trainer.state.max_steps:
+                    progress_bar = (
+                        trainer.transformer_trainer.state.global_step /
+                        trainer.transformer_trainer.state.max_steps
+                    )
                     training_progress(progress_bar)
+                    time.sleep(0.5)
                 training_progress(1.0)
 
-            t1 = Thread(target=train_and_update)
+            t1 = Thread(target=trainer.train)
             t1.start()
-            while trainer.transformer_trainer is None:
-                time.sleep(0.5)
-            total_steps = len(trainer.transformer_trainer.train_dataset) * trainer.transformer_trainer.args.num_train_epochs
-            total_steps = total_steps // (trainer.transformer_trainer.args.per_device_train_batch_size * trainer.transformer_trainer.args.gradient_accumulation_steps)
-            t2 = Thread(target=update_progress(total_steps))
+            t2 = Thread(target=update_progress())
             t2.start()
             t1.join()
-
+            t2.join()
 
             yield "🎉 Model training complete! Please provide your task prompt."
 
