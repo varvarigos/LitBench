@@ -14,6 +14,26 @@ qlora:
   #- up_proj
   #- down_proj
 
+training:
+  per_device_train_batch_size: 4
+  warmup_steps: 100
+  num_train_epochs: 1
+  learning_rate: 0.0002
+  lr_scheduler_type: 'cosine'
+  fp16: true
+  logging_steps: 1
+  report_to: "wandb"
+  save_steps: 50
+
+generation:
+  max_new_tokens: 1000
+  do_sample: True
+  top_p: 0.9
+  top_k: 50
+  temperature: 0.7
+  no_repeat_ngram_size: 2
+  num_beams: 1
+
 directories:
   pretrained_model: "models/llama_1b_qlora_uncensored_1_adapter_test_graph"
   save_zip_directory: "quant_bio_retrieval/research_papers_zip/"
