@@ -316,10 +316,7 @@ def predict(message, history, selected_task):
 
     # Handle preferences
     if len(history) == 0:
-        if not download_papers.value and train_model.value:
-            yield f"✅ Using predefined graph: {predef_graph}"
-            G = nx.read_gexf(predef_graph)
-        elif not download_papers.value and not train_model.value:
+        if not download_papers.value and not train_model.value:
             yield "✅ Loading model from configuration file."
 
             adapter_path = config["directories"]["pretrained_model"]
@@ -420,6 +417,7 @@ def predict(message, history, selected_task):
                 data_download = json.load(f)
 
             papers_to_download = list(data_download.keys())
+            papers_to_download = papers_to_download[:80]
 
             yield f"📥 Fetching {len(papers_to_download)} arXiv papers' source files... Please wait."
 
@@ -514,10 +512,11 @@ def predict(message, history, selected_task):
 
                 G.remove_nodes_from(list(nx.isolates(G)))
 
+                nx.write_gexf(G, gexf_file)
+                print(f"Processed graph written to {gexf_file}")
+            else:
+                yield f"✅ Using predefined graph: {predef_graph}"
 
-            nx.write_gexf(G, gexf_file)
-            print(f"Processed graph written to {gexf_file}")
-        
 
             wandb.init(project='qlora_train')
             index = 1
@@ -536,7 +535,8 @@ def predict(message, history, selected_task):
                 # Wait for the trainer to be initialized
                 while trainer.transformer_trainer is None:
                     time.sleep(0.5)
-
+                
+                time.sleep(1.5)
                 # Update the progress bar until training is complete
                 while trainer.transformer_trainer.state.global_step != trainer.transformer_trainer.state.max_steps:
                     progress_bar = (
