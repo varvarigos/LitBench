@@ -335,13 +335,13 @@ def predict(message, history, selected_task):
 
         generate_kwargs = {
             "streamer": streamer,
-            "max_new_tokens": 1000,
-            "do_sample": True,
-            "top_p": 0.9,
-            "top_k": 50,
-            "temperature": 0.7,
-            "no_repeat_ngram_size": 2,
-            "num_beams": 1,
+            "max_new_tokens": config["generation"]["max_new_tokens"],
+            "do_sample": config["generation"]["do_sample"],
+            "top_p": config["generation"]["top_p"],
+            "top_k": config["generation"]["top_k"],
+            "temperature": config["generation"]["temperature"],
+            "no_repeat_ngram_size": config["generation"]["no_repeat_ngram_size"],
+            "num_beams": config["generation"]["num_beams"],
             "stopping_criteria": StoppingCriteriaList([stop]),
         }
 
