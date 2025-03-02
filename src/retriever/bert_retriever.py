@@ -104,7 +104,6 @@ def retriever(query, retrieval_nodes_path):
     
     sorted_scores = sorted(id_score_list, key=lambda i: i[-1], reverse = True)
     top_K_paper = [sample[0] for sample in sorted_scores[:30000]]
-    print(top_K_paper)
 
     papers_results = {
         paper: True
