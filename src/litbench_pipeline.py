@@ -417,7 +417,6 @@ def predict(message, history, selected_task):
                 data_download = json.load(f)
 
             papers_to_download = list(data_download.keys())
-            papers_to_download = papers_to_download[:80]
 
             yield f"📥 Fetching {len(papers_to_download)} arXiv papers' source files... Please wait."
 
