@@ -408,7 +408,7 @@ def predict(message, history, selected_task):
     if len(history) == 0:
         if download_papers.value:
             # Fetch relevant papers
-            yield "📥 Retrieving relevant papers..."
+            yield "🔍 Retrieving relevant papers..."
 
             retrieve_progress = gr.Progress()
             for percent in retriever(message, retrieval_nodes_path):
