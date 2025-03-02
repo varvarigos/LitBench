@@ -203,6 +203,8 @@ def fetch_arxiv_papers(papers_to_download):
                 # If configured, store the raw content in the graph
                 if config['processing']['keep_unstructured_content']:
                     graph[paper_name] = {'content': content}
+                else:
+                    graph[paper_name] = {}
 
                 # Check for inline bibliography within the LaTeX document
                 if check_internal == 1:
@@ -463,28 +465,50 @@ def predict(message, history, selected_task):
                 G = nx.DiGraph()
                 for k in renamed_data:
                     if k not in G and k in papers:
-                        G.add_node(
-                            k,
-                            title=papers[k]['title'],
-                            abstract=papers[k]['abstract'],
-                            introduction=renamed_data[k].get('Introduction', '') if renamed_data[k].get('Introduction', '') != '\n' else '',
-                            related=renamed_data[k].get('Related Work', '') if renamed_data[k].get('Related Work', '') != '\n' else '',
-                            concepts=", ".join(list(set(item for sublist in id2topics[k] for item in sublist))) if k in id2topics else ''
-                        )
+                        if config['processing']['keep_unstructured_content']:
+                            G.add_node(
+                                k,
+                                title=papers[k]['title'],
+                                abstract=papers[k]['abstract'],
+                                introduction=renamed_data[k].get('Introduction', '') if renamed_data[k].get('Introduction', '') != '\n' else '',
+                                related=renamed_data[k].get('Related Work', '') if renamed_data[k].get('Related Work', '') != '\n' else '',
+                                concepts=", ".join(list(set(item for sublist in id2topics[k] for item in sublist))) if k in id2topics else '',
+                                content=renamed_data[k].get('content', '') if k in renamed_data else ''
+                            )
+                        else:
+                            G.add_node(
+                                k,
+                                title=papers[k]['title'],
+                                abstract=papers[k]['abstract'],
+                                introduction=renamed_data[k].get('Introduction', '') if renamed_data[k].get('Introduction', '') != '\n' else '',
+                                related=renamed_data[k].get('Related Work', '') if renamed_data[k].get('Related Work', '') != '\n' else '',
+                                concepts=", ".join(list(set(item for sublist in id2topics[k] for item in sublist))) if k in id2topics else ''
+                            )
                     if 'Citations' in renamed_data[k]:
                         for citation in renamed_data[k]['Citations']:
                             source, target, metadata = citation
                             sentence = metadata.get('sentence', '')  # Extract sentence or default to empty string
 
                             if target not in G and target in papers:
-                                G.add_node(
-                                    target,
-                                    title=papers[target]['title'],
-                                    abstract=papers[target]['abstract'],
-                                    introduction=renamed_data[target].get('Introduction', '') if target in renamed_data and renamed_data[target].get('Introduction', '') != '\n'  else '',
-                                    related=renamed_data[target].get('Related Work', '') if target in renamed_data and renamed_data[target].get('Related Work', '') != '\n'  else '',
-                                    concepts=", ".join(list(set(item for sublist in concept_data[target].values() for item in sublist))) if target in concept_data else ''
-                                )
+                                if config['processing']['keep_unstructured_content']:
+                                    G.add_node(
+                                        target,
+                                        title=papers[target]['title'],
+                                        abstract=papers[target]['abstract'],
+                                        introduction=renamed_data[target].get('Introduction', '') if target in renamed_data and renamed_data[target].get('Introduction', '') != '\n'  else '',
+                                        related=renamed_data[target].get('Related Work', '') if target in renamed_data and renamed_data[target].get('Related Work', '') != '\n'  else '',
+                                        concepts=", ".join(list(set(item for sublist in concept_data[target].values() for item in sublist))) if target in concept_data else '',
+                                        content=renamed_data[target].get('content', '') if target in renamed_data else ''
+                                    )
+                                else:
+                                    G.add_node(
+                                        target,
+                                        title=papers[target]['title'],
+                                        abstract=papers[target]['abstract'],
+                                        introduction=renamed_data[target].get('Introduction', '') if target in renamed_data and renamed_data[target].get('Introduction', '') != '\n'  else '',
+                                        related=renamed_data[target].get('Related Work', '') if target in renamed_data and renamed_data[target].get('Related Work', '') != '\n'  else '',
+                                        concepts=", ".join(list(set(item for sublist in concept_data[target].values() for item in sublist))) if target in concept_data else ''
+                                    )
                             
                             G.add_edge(source, target, sentence=sentence)
 
