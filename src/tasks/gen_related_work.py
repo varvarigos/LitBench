@@ -1,3 +1,16 @@
+"""
+Generates the related work section for a given paper.
+
+The input
+    - The input prompt is a string that contains the information of the paper for which the related work section needs to be generated.
+    - The input prompt should be in the following format:
+        Title of Paper: <title of the paper>
+
+        Abstract of Paper: <abstract of the paper>
+The output
+    - The output is a string that contains the related work section for the given paper.
+"""
+
 import torch
 import json
 import networkx as nx
