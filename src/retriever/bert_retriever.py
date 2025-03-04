@@ -89,7 +89,6 @@ def retriever(query, retrieval_nodes_path):
     dataset = load_dataset("AliMaatouk/arXiv-Topics-Embeddings")["train"]
     table = dataset.data  # Get PyArrow Table
     all_candidate_embs = table.column("embedding").to_numpy()
-    all_candidate_embs =  np.stack(all_candidate_embs)
     all_candidate_embs = np.stack(all_candidate_embs)
 
     # Calculate the cosine similarity between the query and all candidate embeddings
