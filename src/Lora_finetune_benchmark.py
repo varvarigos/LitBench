@@ -10,15 +10,6 @@ from peft import (LoraConfig, get_peft_model,
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 
-def read_yaml_file(file_path):
-    with open(file_path, 'r') as file:
-        try:
-            data = yaml.safe_load(file)
-            return data
-        except yaml.YAMLError as e:
-            print(f"Error reading YAML file: {e}")
-
-
 class QloraTrainer_CS:
     def __init__(self, config: dict, index, use_predefined_graph=False):
         self.config = config
