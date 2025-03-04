@@ -47,7 +47,7 @@ class LitFM():
         self.generation_model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map="auto", )
         self.generation_model = PeftModel.from_pretrained(self.generation_model, adapter_path, adapter_name="instruction", torch_dtype=torch.float16)
 
-        # use llama-3-8B instruct model
+        # define instruction models
         self.instruction_tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.1-8B-Instruct")
         self.instruction_model = AutoModelForCausalLM.from_pretrained(
             "meta-llama/Llama-3.1-8B-Instruct",
