@@ -97,5 +97,6 @@ To format your input correctly, refer to the corresponding `.md` file for each t
 - **Citation Recommendation** → [`paper_retrieval.md`](docs/tasks/paper_retrieval.md)
 - **Introduction to Abstract** → [`intro_2_abs.md`](docs/tasks/intro_2_abs.md)
 - **Influential Papers Recommendation** → [`influential_papers.md`](docs/tasks/influential_papers.md)
+- **Related Work Generation** → [`gen_related_work.md`](docs/tasks/gen_related_work.md)
 
 If no task is selected, the model will run a **general inference process**, responding freely based on the user's prompt.
