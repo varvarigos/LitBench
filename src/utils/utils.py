@@ -12,11 +12,17 @@ import networkx as nx
 import re
 
 
-
 def is_venv():
     return (hasattr(sys, 'real_prefix') or
             (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix))
 
+def read_yaml_file(file_path):
+    with open(file_path, 'r') as file:
+        try:
+            data = yaml.safe_load(file)
+            return data
+        except yaml.YAMLError as e:
+            print(f"Error reading YAML file: {e}")
 
 def read_tex_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
