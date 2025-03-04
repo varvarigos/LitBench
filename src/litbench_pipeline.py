@@ -40,10 +40,11 @@ def setup(download_option, train_option):
     download_papers.value = (download_option == "Download Paper")
     train_model.value = (train_option == "Train")
 
-    if train_option == "Train":
+    if download_option == "Download Paper":
         initial_message = [{"role": "assistant", "content": "Hello, what domain are you interested in?"}]
     else:
         initial_message = [{"role": "assistant", "content": "Please provide your task prompt."}]
+
 
     return gr.update(visible=False), gr.update(visible=True), f"Download: {download_option}\nTrain: {train_option}", initial_message
 
@@ -317,7 +318,7 @@ def predict(message, history, selected_task):
     # Handle preferences
     if len(history) == 0:
         if not download_papers.value and not train_model.value:
-            yield "✅ Loading model from configuration file."
+            yield "✅ Using model from configuration file."
 
             adapter_path = config["directories"]["pretrained_model"]
             peft_model = PeftModel.from_pretrained(model, adapter_path, torch_dtype=torch.float16)
@@ -366,11 +367,14 @@ def predict(message, history, selected_task):
                     graph = nx.read_gexf(predef_graph)
                     out = influential_papers(message, graph)
             elif selected_task == "Related Work Generation":
-                out = gen_related_work()
+                if download_papers.value:
+                    out = gen_related_work(message, gexf_file)
+                else:
+                    out = gen_related_work(message, predef_graph)
             else:
                 prompt = conversation + f"<human>: {message}\n<bot>:"
 
-            if selected_task != "Influential Papers Recommendation":
+            if selected_task != "Influential Papers Recommendation" and selected_task != "Related Work Generation":
                 model_inputs = tokenizer(prompt, return_tensors="pt").to(device)
                 generate_kwargs["inputs"] = model_inputs["input_ids"]
                 generate_kwargs["attention_mask"] = model_inputs["attention_mask"]
@@ -390,9 +394,9 @@ def predict(message, history, selected_task):
         global out
         out = None
         t.start()
-        
+
         # Stream the partial response
-        if selected_task != "Influential Papers Recommendation":
+        if selected_task != "Influential Papers Recommendation" and selected_task != "Related Work Generation":
             partial_message = ""
             for new_token in streamer:
                 if new_token != '<':  # Ignore placeholder tokens
@@ -673,17 +677,22 @@ if __name__ == "__main__":
                 gr.Markdown("### Start Chatting!")
                 chatbot = gr.ChatInterface(
                     predict,
-                    chatbot=gr.Chatbot(height=400, type="messages", avatar_images=[
-                        "https://icons.veryicon.com/png/o/miscellaneous/user-avatar/user-avatar-male-5.png",
-                        "https://cdn-icons-png.flaticon.com/512/8649/8649595.png"
-                    ]),
+                    chatbot=gr.Chatbot(
+                        height=400,
+                        type="messages",
+                        avatar_images=[
+                            "https://icons.veryicon.com/png/o/miscellaneous/user-avatar/user-avatar-male-5.png",
+                            "https://cdn-icons-png.flaticon.com/512/8649/8649595.png"
+                        ],
+                    ),
                     textbox=gr.Textbox(placeholder="Type your message here..."),
                     additional_inputs=selected_task,
                     additional_inputs_accordion=gr.Accordion(visible=False, label="Additional Inputs", ),
                 )
-
+                
                 # Store user preferences and selected task for display
                 preferences_output = gr.Textbox(value="", interactive=False, label="Your Preferences")
+
 
             # Task selection buttons for user interaction
             with gr.Column(scale=1):
@@ -704,13 +713,13 @@ if __name__ == "__main__":
                         )
 
 
-        # Setup button to finalize user preferences and start chatbot
+        # Setup button to finalize user preferences and start chatbot        
         setup_button.click(
             setup,
             inputs=[download_option, train_option],
             outputs=[setup_row, chatbot_row, preferences_output, chatbot.chatbot]
         )
-
+        
 
     # Launch the interface
     demo.launch(server_port=7880)
