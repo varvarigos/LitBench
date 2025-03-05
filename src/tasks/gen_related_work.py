@@ -10,7 +10,6 @@ The input
 The output
     - The output is a string that contains the related work section for the given paper.
 """
-
 import torch
 import json
 import networkx as nx
