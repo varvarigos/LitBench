@@ -42,7 +42,7 @@ def setup(download_option, train_option):
 
     if download_option == "Download Paper":
         initial_message = [{"role": "assistant", "content": "Hello, what domain are you interested in?"}]
-    elif download_option != "Download Paper" and train_option != "Train":
+    elif download_option != "Download Paper" and train_option == "Train":
         initial_message = [{"role": "assistant", "content": "What domain is your graph about?"}]
     else:
         initial_message = [{"role": "assistant", "content": "Please provide your task prompt."}]
