@@ -55,3 +55,5 @@ model_family: llama  # if unspecified will use AutoModelForCausalLM/AutoTokenize
 trainer_output_dir: trainer_outputs/
 eval_output_dir: eval_outputs/
 model_output_dir: models   # model saved in {model_output_dir}/{model_name}
+instruction_model: meta-llama/Llama-3.1-8B-Instruct
+index: 1
