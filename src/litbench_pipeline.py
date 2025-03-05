@@ -42,9 +42,10 @@ def setup(download_option, train_option):
 
     if download_option == "Download Paper":
         initial_message = [{"role": "assistant", "content": "Hello, what domain are you interested in?"}]
+    elif download_option != "Download Paper" and train_option != "Train":
+        initial_message = [{"role": "assistant", "content": "What domain is your graph about?"}]
     else:
         initial_message = [{"role": "assistant", "content": "Please provide your task prompt."}]
-
 
     return gr.update(visible=False), gr.update(visible=True), f"Download: {download_option}\nTrain: {train_option}", initial_message
 
@@ -344,6 +345,7 @@ def predict(message, history, selected_task):
             "num_beams": config["generation"]["num_beams"],
             "stopping_criteria": StoppingCriteriaList([stop]),
         }
+        
 
         def generate_response(model, generate_kwargs, selected_task):
             global out
@@ -367,7 +369,6 @@ def predict(message, history, selected_task):
                     graph = nx.read_gexf(predef_graph)
                     out = influential_papers(message, graph)
             elif selected_task == "Related Work Generation":
-                yield "🔍 Generating related work..."
                 if download_papers.value:
                     out = gen_related_work(message, gexf_file, adapter_path)
                 else:
@@ -382,7 +383,6 @@ def predict(message, history, selected_task):
 
                 response = model.generate(**generate_kwargs)
                 streamer.put(response)
-
 
         # Generate the response in a separate thread
         t = Thread(target=generate_response,
@@ -404,6 +404,8 @@ def predict(message, history, selected_task):
                     partial_message += new_token
                     yield partial_message
         else:
+            if selected_task == "Related Work Generation":
+                yield "🔍 Generating related work..."
             while out == None:
                 time.sleep(0.1)
             yield out
