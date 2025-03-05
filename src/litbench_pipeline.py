@@ -318,7 +318,7 @@ def predict(message, history, selected_task):
     # Handle preferences
     if len(history) == 0:
         if not download_papers.value and not train_model.value:
-            yield "✅ Using model from configuration file."
+            yield "✅ Using model from configuration file..."
 
             adapter_path = config["directories"]["pretrained_model"]
             peft_model = PeftModel.from_pretrained(model, adapter_path, torch_dtype=torch.float16)
@@ -368,9 +368,9 @@ def predict(message, history, selected_task):
                     out = influential_papers(message, graph)
             elif selected_task == "Related Work Generation":
                 if download_papers.value:
-                    out = gen_related_work(message, gexf_file)
+                    out = gen_related_work(message, gexf_file, adapter_path)
                 else:
-                    out = gen_related_work(message, predef_graph)
+                    out = gen_related_work(message, predef_graph, adapter_path)
             else:
                 prompt = conversation + f"<human>: {message}\n<bot>:"
 
