@@ -158,7 +158,7 @@ class LitFM():
             i += 1
 
         res = [
-            {"role": "system", "content": "Please combine the following paragraphs in a cohenrent way that also keeps the citations and make the flow between paragraphs more smoothly\nAdd a sentence at the beginning of each paragraph to clarify its connection to the previous ones.\n"},
+            {"role": "system", "content": "Please combine the following paragraphs in a cohenrent way that also keeps the citations and make the flow between paragraphs more smoothly\nAdd a sentence at the beginning of each paragraph to clarify its connection to the previous ones. Do not include any other surrounding text and not add a references list at all\n"},
             {"role": "user", "content": prompt_input},
         ]
 
@@ -314,6 +314,7 @@ class LitFM():
         if len(split_topics) > topic_num:
             return ["too many topics", split_topics]
 
+
         # Get top-5 papers for each topic
         for retrieval_query in split_topics:
             # retrieve papers
@@ -344,6 +345,7 @@ class LitFM():
                             break
             citation_papers.append(topic_specific_citation_papers)
 
+
         # Generate citation sentences
         for topic_idx in range(len(citation_papers)):
             topic_specific_nei_sentence = []
@@ -354,9 +356,11 @@ class LitFM():
                 topic_specific_nei_sentence.append(sentence)
             nei_sentence.append(topic_specific_nei_sentence)
 
+
         # Generate paragraphs
         paragraphs = []
-        paper_citation_indicator = 1
+        references = []               # Store references for citation
+        paper_citation_indicator = 1  # Indicator for citation paper
         for topic_idx in range(len(citation_papers)):
             datapoint = {'usr_prompt': usr_prompt, 
                         'nei_title': citation_papers[topic_idx], 
@@ -368,18 +372,27 @@ class LitFM():
             ans = self.get_llm_response(prompt, 'zeroshot')
             res = ans['content']
             paragraphs.append(res)
+            
+            # Store referencess
+            for ref_idx, paper in enumerate(citation_papers[topic_idx]):
+                references.append(f"[{paper_citation_indicator + ref_idx}] {paper}")
 
+            # Update paper_citation_indicator
             paper_citation_indicator = paper_citation_indicator + len(nei_sentence[topic_idx])
+
 
         # Generate summary
         datapoint = {'usr_prompt': usr_prompt, 'paragraphs': paragraphs}
         prompt = self._generate_summary_prompt(datapoint)
         ans = self.get_llm_response(prompt, 'zeroshot')
         summary = ans['content']
+        
+        # Append references to summary
+        summary_with_references = summary + "\n\n### References\n" + "\n".join(references)
 
-        return summary
+        return summary_with_references
 
 
 def gen_related_work(message, graph_path, adapter_path):
-    LitFM_example = LitFM(graph_path, adapter_path)
-    return LitFM_example.single_paper_related_work_generation(message)
+    litfm_instance = LitFM(graph_path, adapter_path)
+    return litfm_instance.single_paper_related_work_generation(message)
