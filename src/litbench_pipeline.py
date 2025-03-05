@@ -367,6 +367,7 @@ def predict(message, history, selected_task):
                     graph = nx.read_gexf(predef_graph)
                     out = influential_papers(message, graph)
             elif selected_task == "Related Work Generation":
+                yield "🔍 Generating related work..."
                 if download_papers.value:
                     out = gen_related_work(message, gexf_file, adapter_path)
                 else:
