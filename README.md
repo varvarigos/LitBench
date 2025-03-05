@@ -42,7 +42,7 @@ Ensure you have Python 3.10 installed before proceeding with the setup.
 ```bash
 # Clone the repository
 git clone <repository_url>
-cd litbench
+cd LitBench
 
 # Create a virtual environment
 python3.10 -m venv litbench
@@ -63,7 +63,7 @@ huggingface-cli login
 Running the Citation Graph Module
 
 ```bash
-cd litbench
+cd LitBench
 source litbench/bin/activate  # Activate virtual environment
 python3.10 src/litbench_pipeline.py
 ```
