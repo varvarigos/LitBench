@@ -35,7 +35,7 @@ generation:
   num_beams: 1
 
 directories:
-  pretrained_model: models/Robotics/Meta-LLama-3-8B-Quantative-Robotics
+  pretrained_model: "models/Robotics/Meta-LLama-3-8B-Quantative-Robotics"
   save_zip_directory: "quant_bio_retrieval/research_papers_zip/"
   save_directory: "quant_bio_retrieval/research_papers/"
   save_description: "quant_bio_retrieval/description/"
