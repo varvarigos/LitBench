@@ -48,7 +48,7 @@ class LitFM():
         # define instruction models
         self.instruction_pipe = pipeline(
             "text-generation",
-            model="meta-llama/Llama-3.1-8B-Instruct",
+            model=config["instruction_model"],
             model_kwargs={"torch_dtype": torch.bfloat16},
             device_map="auto",
         )
