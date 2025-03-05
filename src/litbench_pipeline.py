@@ -522,7 +522,7 @@ def predict(message, history, selected_task):
 
 
             wandb.init(project='qlora_train')
-            index = 1
+            index = config['index']
 
             if download_papers.value:
                 trainer = QloraTrainer_CS(config=config, index=index, use_predefined_graph=False)
