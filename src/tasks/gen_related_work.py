@@ -17,19 +17,17 @@ import networkx as nx
 import numpy as np
 from tqdm import tqdm
 from peft import PeftModel
-from transformers import (AutoModel, AutoTokenizer, AutoModelForCausalLM)
+from transformers import (AutoModel, AutoTokenizer, AutoModelForCausalLM, pipeline)
 from tqdm import tqdm
 import re
 import pandas as pd
 import os
-from datasets import load_dataset
 from sklearn.metrics.pairwise import cosine_similarity
 from utils.utils import read_yaml_file
 
 
 class LitFM():
-    def __init__(self, graph_path):
-        adapter_path = "models/llama_1b_qlora_uncensored_1_adapter_test_graph"
+    def __init__(self, graph_path, adapter_path):
         config_path = 'conf/config.yaml'
         self.pretrained_model = 'BAAI/bge-large-en-v1.5'
         self.graph_name = graph_path.split('.')[0].split('/')[-1] if '/' in graph_path else graph_path.split('.')[0]
@@ -48,10 +46,10 @@ class LitFM():
         self.generation_model = PeftModel.from_pretrained(self.generation_model, adapter_path, adapter_name="instruction", torch_dtype=torch.float16)
 
         # define instruction models
-        self.instruction_tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.1-8B-Instruct")
-        self.instruction_model = AutoModelForCausalLM.from_pretrained(
-            "meta-llama/Llama-3.1-8B-Instruct",
-            torch_dtype=torch.bfloat16,
+        self.instruction_pipe = pipeline(
+            "text-generation",
+            model="meta-llama/Llama-3.1-8B-Instruct",
+            model_kwargs={"torch_dtype": torch.bfloat16},
             device_map="auto",
         )
 
@@ -85,15 +83,8 @@ class LitFM():
         for paper_id in whole_graph_data_raw.nodes():
             title = whole_graph_data_raw.nodes()[paper_id]['title']
             abstract = whole_graph_data_raw.nodes()[paper_id]['abstract']
-            self.whole_graph_id_2_title_abs[self.whole_graph_raw_id_2_id_dict[paper_id]] = [title, abstract]
+            self.whole_graph_id_2_title_abs[self.whole_graph_raw_id_2_id_dict[paper_id]] = [title, abstract]        
 
-        arxiv_topics = load_dataset("json", data_files="datasets/arxiv_topics.jsonl")
-        self.whole_graph_id_2_topics = dict()
-        for entry in arxiv_topics['train']:
-            if entry["paper_id"] in self.whole_graph_raw_id_2_id_dict:
-                self.whole_graph_id_2_topics[entry["paper_id"]] = [entry["Level 1"], entry["Level 2"], entry["Level 3"]]
-        
-        
         # define prompt template
         template_file_path = 'conf/alpaca.json'
         with open(template_file_path) as fp:
@@ -102,19 +93,18 @@ class LitFM():
 
 
     def _generate_retrieval_prompt(self, data_point: dict):
-        instruction =  "Please select the paper that is more likely to be cited by paper A from the given candidate papers. Your answer MUST be **only the exact title** of the selected paper. The paper title you select MUST be one of the 10 candidate papers. Do NOT generate anything else. Do NOT include explanations, formatting, or extra text. The output should be **ONLY the selected paper title** with no surrounding text and no further explanation/information."
-
+        instruction = "Please select the paper that is more likely to be cited by the paper from candidate papers. Your answer MUST be **only the exact title** of the selected paper without generating ANY other text or section.\n"
         prompt_input = ""
         prompt_input = prompt_input + data_point['usr_prompt'] + "\n"
         prompt_input = prompt_input + "candidate papers: " + "\n"
         for i in range(len(data_point['nei_titles'])):
             prompt_input = prompt_input + str(i) + '. ' + data_point['nei_titles'][i] + "\n"
-        
+
         res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
         return res
 
     def _generate_sentence_prompt(self, data_point):
-        instruction = "Please generate the citation sentence of how Paper A cites paper B in its related work section."
+        instruction = "Please generate the citation sentence of how the Paper cites paper B in its related work section."
 
         prompt_input = ""
         prompt_input = prompt_input + data_point['usr_prompt'] + "\n"
@@ -126,22 +116,23 @@ class LitFM():
         return res
 
     def _generate_topic_prompt(self, data_point):
-        instruction = "I need to write the related work section for this paper. Could you suggest three most relevant topics to discuss in the related work section? Your answer should be strictly one topic after the other line by line with nothing else being generated and no further explanation/information.\n"
-
         prompt_input = ""
         prompt_input = prompt_input + "Here are the information of the paper: \n"
         prompt_input = prompt_input + data_point['usr_prompt'] + '\n'
         prompt_input = prompt_input + "Directlty give me the topics you select.\n"
             
-        res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
+        res = [
+            {"role": "system", "content": "I need to write the related work section for this paper. Could you suggest three most relevant topics to discuss in the related work section? Your answer should be strictly one topic after the other line by line with nothing else being generated and no further explanation/information.\n"},
+            {"role": "user", "content": prompt_input},
+        ]
+
         return res
 
     def _generate_paragraph_prompt(self, data_point):
-        instruction = "Please write a paragraph that review the research relationships between this paper and other cited papers."
         prompt_input = ""
         prompt_input = prompt_input + data_point['usr_prompt'] + "\n"
         prompt_input = prompt_input + "Topic of this paragraph: " + data_point['topic'] + "\n"
-        prompt_input = prompt_input + "papers that should be cited in paragraph: \n"
+        prompt_input = prompt_input + "Papers that should be cited in paragraph: \n"
 
         i = data_point['paper_citation_indicator']
         for paper_idx in range(len(data_point['nei_title'])):
@@ -149,22 +140,29 @@ class LitFM():
             i += 1
         
         prompt_input = prompt_input + "All the above cited papers should be included and each cited paper should be indicated with its index number. Note that you should not include the title of any paper\n"
-        res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
+
+        res = [
+            {"role": "system", "content": "Please write a paragraph that review the research relationships between this paper and other cited papers.\n"},
+            {"role": "user", "content": prompt_input},
+        ]
+
         return res
 
     def _generate_summary_prompt(self, data_point):
-        instruction = "Please combine the following paragraphs in a cohenrent way that also keeps the citations and make the flow between paragraphs more smoothly"
-        instruction += "Add a sentence at the beginning of each paragraph to clarify its connection to the previous ones."
-        
         prompt_input = ""
         prompt_input = prompt_input + data_point['usr_prompt'] + "\n"
         prompt_input = prompt_input + "Paragraphs that should be combined: " + "\n"
-        
+
         i = 1
         for para in data_point['paragraphs']:
             prompt_input = prompt_input + " Paragraph " + str(i) + ": " + para + '\n'
             i += 1
-        res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
+
+        res = [
+            {"role": "system", "content": "Please combine the following paragraphs in a cohenrent way that also keeps the citations and make the flow between paragraphs more smoothly\nAdd a sentence at the beginning of each paragraph to clarify its connection to the previous ones.\n"},
+            {"role": "user", "content": prompt_input},
+        ]
+
         return res
 
 
@@ -190,27 +188,22 @@ class LitFM():
     def get_llm_response(self, prompt, model_type):
         self.generation_model.set_adapter('instruction')
         if model_type == 'zeroshot':
-            raw_output = self.generate_text(
+            raw_output = self.instruction_pipe(
                 prompt,
-                self.generation_tokenizer,
-                self.generation_model,
-                temperature=0.9,
-                top_p=0.95,
-                repetition_penalty=1.15,
                 max_new_tokens=8096,
-            )
-        
-        if model_type == 'zeroshot_short':
-            self.generation_model.set_adapter('instruction')
-            raw_output = self.generate_text(
-                prompt,
-                self.instruction_tokenizer,
-                self.instruction_model,
                 temperature=0.9,
                 top_p=0.95,
                 repetition_penalty=1.15,
+            )[0]['generated_text'][-1]   
+     
+        if model_type == 'zeroshot_short':
+            raw_output = self.instruction_pipe(
+                prompt,
                 max_new_tokens=256,
-            )
+                temperature=0.9,
+                top_p=0.95,
+                repetition_penalty=1.15,
+            )[0]['generated_text'][-1]
 
         if model_type == 'instruction':
             self.generation_model.set_adapter('instruction')
@@ -226,7 +219,6 @@ class LitFM():
 
         return raw_output
 
-
     def single_paper_sentence_test(self, usr_prompt, t_title, t_abs):
         datapoint = {'usr_prompt':usr_prompt, 't_title':t_title, 't_abs':t_abs}
         prompt = self._generate_sentence_prompt(datapoint)
@@ -237,7 +229,7 @@ class LitFM():
     def single_paper_retrieval_test(self, usr_prompt, candidates):
         datapoint = {'usr_prompt':usr_prompt, 'nei_titles':list(candidates), 't_title': ''}
         prompt = self._generate_retrieval_prompt(datapoint)
-        ans = self.get_llm_response(prompt, 'instruction')        
+        ans = self.get_llm_response(prompt, 'instruction')
         res = ans.strip().split(self.human_instruction[1])[-1]
         return res
 
@@ -245,45 +237,43 @@ class LitFM():
         datapoint = {'usr_prompt': usr_prompt}
         prompt = self._generate_topic_prompt(datapoint)
         ans = self.get_llm_response(prompt, 'zeroshot_short')
-        res = ans.strip().split(self.human_instruction[1])[-1]
+        res = ans['content']
+        res = res.replace('\n\n', '\n')
         return res
 
     def retrieval_for_one_query(self, id_2_title_abs, prompt):
-        tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-large-en-v1.5")
-        model = AutoModel.from_pretrained("BAAI/bge-large-en-v1.5").to(device='cuda', dtype=torch.float16)
-        model.eval()
-
-        paper_list = list(self.whole_graph_id_2_topics.keys())
         if os.path.exists(f'datasets/{self.graph_name}_embeddings.parquet'):
             all_query_embs = torch.tensor(np.array(pd.read_parquet(f'datasets/{self.graph_name}_embeddings.parquet')))
         else:
-            all_query_embs = torch.zeros(len(paper_list), 1024)
-            for topic_level in ['Level 1', 'Level 2', 'Level 3']:
-                i = 0
-                batch_size = 2048
-                candidate_emb_list = []
-                pbar = tqdm(total=len(paper_list))
-                while i < len(paper_list):
-                    paper_batch = paper_list[i:i+batch_size]
-                    paper_text_batch = []
-                    for paper_id in paper_batch:
-                        topics = self.whole_graph_id_2_topics[paper_id][int(topic_level[6])-1]
-                        topic_text = ''
-                        for t in topics:
-                            topic_text += t + ','
-                        paper_text_batch.append(topic_text)
-                    inputs = tokenizer(paper_text_batch, return_tensors='pt', padding=True, truncation=True)
-                    with torch.no_grad():
-                        outputs = model(**inputs.to('cuda'))
-                        candidate_embeddings = outputs.last_hidden_state[:, 0, :].cpu()
-                        candidate_embeddings = candidate_embeddings.reshape(-1, 1024)
-                        candidate_emb_list.append(candidate_embeddings)
+            tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-large-en-v1.5")
+            model = AutoModel.from_pretrained("BAAI/bge-large-en-v1.5").to(device='cuda', dtype=torch.float16)
+            model.eval()
 
-                        i += len(candidate_embeddings)
-                        pbar.update(len(candidate_embeddings))
+            paper_list = list(id_2_title_abs.keys())
 
-                all_query_embs += torch.cat(candidate_emb_list, 0)
-    
+            all_query_embs = torch.zeros(len(paper_list), 1024)            
+            i = 0
+            batch_size = 200
+            candidate_emb_list = []
+            pbar = tqdm(total=len(paper_list))
+            while i < len(paper_list):
+                paper_batch = paper_list[i:i+batch_size]
+                paper_text_batch = []
+                for paper_id in paper_batch:
+                    prompt = id_2_title_abs[paper_id][0] + id_2_title_abs[paper_id][1]
+                    paper_text_batch.append(prompt)
+                inputs = tokenizer(paper_text_batch, return_tensors='pt', padding=True, truncation=True)
+
+                with torch.no_grad():
+                    outputs = model(**inputs.to('cuda'))
+                    candidate_embeddings = outputs.last_hidden_state[:, 0, :].cpu()
+                    candidate_embeddings = candidate_embeddings.reshape(-1, 1024)
+                    candidate_emb_list.append(candidate_embeddings)
+
+                    i += len(candidate_embeddings)
+                    pbar.update(len(candidate_embeddings))
+
+            all_query_embs = torch.cat(candidate_emb_list, 0)
             pd.DataFrame(all_query_embs.numpy()).to_parquet(f'datasets/{self.graph_name}_embeddings.parquet')
 
         # get the embeddings of the prompt
@@ -297,7 +287,6 @@ class LitFM():
             output = LLM_model(**encoded_input.to('cuda'), output_hidden_states=True).hidden_states[-1]
             sentence_embedding = output[:, 0, :]
 
-
         tmp_scores = cosine_similarity(sentence_embedding.to("cpu"), all_query_embs.to("cpu"))[0]
         _, idxs = torch.sort(torch.tensor(tmp_scores), descending = True)
         top_10 = [int(k) for k in idxs[:10]]
@@ -305,13 +294,13 @@ class LitFM():
         return [id_2_title_abs[i][0] for i in top_10] 
 
 
-    def single_paper_related_work_generation(self, usr_prompt):    
+    def single_paper_related_work_generation(self, usr_prompt):
         citation_papers = []
         nei_sentence = []
 
         # Get topics
         retrieval_query = self.single_paper_topic_test(usr_prompt)
-        
+
         # Split topics
         topic_num = 3
         try:
@@ -325,7 +314,6 @@ class LitFM():
         split_topics = split_topics[:topic_num]
         if len(split_topics) > topic_num:
             return ["too many topics", split_topics]
-
 
         # Get top-5 papers for each topic
         for retrieval_query in split_topics:
@@ -362,8 +350,8 @@ class LitFM():
             topic_specific_nei_sentence = []
             for paper_idx in range(len(citation_papers[topic_idx])):
                 sentence = self.single_paper_sentence_test(usr_prompt, citation_papers[topic_idx][paper_idx], "")
-                sentence = re.sub(r'\\(\S*)+\}', "", sentence)
-                sentence = re.sub(r'\[(\S*)+\]', "", sentence)
+                # Match \cite{...}
+                sentence = re.sub(r'\\cite\{[^{}]+\}', "", sentence)
                 topic_specific_nei_sentence.append(sentence)
             nei_sentence.append(topic_specific_nei_sentence)
 
@@ -379,7 +367,7 @@ class LitFM():
             
             prompt = self._generate_paragraph_prompt(datapoint)
             ans = self.get_llm_response(prompt, 'zeroshot')
-            res = ans.strip().split(self.human_instruction[1])[-1]
+            res = ans['content']
             paragraphs.append(res)
 
             paper_citation_indicator = paper_citation_indicator + len(nei_sentence[topic_idx])
@@ -388,11 +376,11 @@ class LitFM():
         datapoint = {'usr_prompt': usr_prompt, 'paragraphs': paragraphs}
         prompt = self._generate_summary_prompt(datapoint)
         ans = self.get_llm_response(prompt, 'zeroshot')
-        summary = ans.strip().split(self.human_instruction[1])[-1]
+        summary = ans['content']
 
         return summary
 
 
-def gen_related_work(message, graph_path):
-    LitFM_example = LitFM(graph_path)
+def gen_related_work(message, graph_path, adapter_path):
+    LitFM_example = LitFM(graph_path, adapter_path)
     return LitFM_example.single_paper_related_work_generation(message)
