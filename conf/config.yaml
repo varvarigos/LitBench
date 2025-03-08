@@ -43,7 +43,7 @@ directories:
   gexf_file: "quant_bio_retrieval/description/test_graph.gexf"
   metadata_path: "arxiv-metadata-oai-snapshot.json"
   retrieval_nodes_path: "datasets/retrieval_nodes.json"
-  predefined_graph_path: "datasets/bio_noai.gexf"
+  predefined_graph_path: "datasets/robotics.gexf"
 
 processing:
   random_seed: 10
