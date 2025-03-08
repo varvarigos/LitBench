@@ -372,7 +372,7 @@ class LitFM():
             # Store referencess
             for ref_idx, paper in enumerate(citation_papers[topic_idx]):
                 # Extract year and month from raw_id
-                raw_id = re.sub(r'[a-zA-Z]+', '', paper[1])
+                raw_id = re.sub(r'[a-zA-Z/]+', '', paper[1])
                 year = raw_id[:2]
                 year = '19' + year if int(year) > 70 else '20' + year
                 month = datetime.date(1900, int(raw_id[2:4]), 1).strftime('%B')
