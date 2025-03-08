@@ -65,7 +65,7 @@ def fetch_arxiv_papers(papers_to_download):
         os.system("wget https://huggingface.co/spaces/ddiddu/simsearch/resolve/main/arxiv-metadata-oai-snapshot.json -P ./datasets")
 
     with open(dataset, 'r') as f:
-        for line in f: 
+        for line in f:
             data.append(json.loads(line))
 
     papers = [d for d in data]
@@ -369,6 +369,10 @@ def predict(message, history, selected_task):
                     graph = nx.read_gexf(predef_graph)
                     out = influential_papers(message, graph)
             elif selected_task == "Related Work Generation":
+                adapter_path = (
+                    f"{config['model_output_dir']}/{config['model_name']}_{str(index)}_adapter_test_graph"
+                    if train_model.value else config["directories"]["pretrained_model"]
+                )
                 if download_papers.value:
                     out = gen_related_work(message, gexf_file, adapter_path)
                 else:
