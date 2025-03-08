@@ -23,6 +23,7 @@ import pandas as pd
 import os
 from sklearn.metrics.pairwise import cosine_similarity
 from utils.utils import read_yaml_file
+import datetime
 
 
 class LitFM():
@@ -53,7 +54,7 @@ class LitFM():
         )
 
         # load graph data for retrieval
-        def translate_graph(graph, raw_test_nodes):
+        def translate_graph(graph):
             all_nodes = list(graph.nodes())
             raw_id_2_id_dict = {}
             id_2_raw_id_dict = {}
@@ -63,20 +64,11 @@ class LitFM():
                 raw_id_2_id_dict[node] = num
                 id_2_raw_id_dict[num] = node
                 num += 1
-            
-            new_graph = nx.Graph()
-            test_edges = []
-            for edge in list(graph.edges()):
-                h_id, t_id = raw_id_2_id_dict[edge[0]], raw_id_2_id_dict[edge[1]]
-                if edge[0] in raw_test_nodes or edge[1] in raw_test_nodes:
-                    test_edges.append([h_id, t_id])
-                else:
-                    new_graph.add_edge(h_id, t_id)
-            
-            return new_graph, raw_id_2_id_dict, id_2_raw_id_dict, test_edges
-        
+
+            return raw_id_2_id_dict, id_2_raw_id_dict
+
         whole_graph_data_raw = nx.read_gexf(retrieval_graph_path, node_type=None, relabel=False, version='1.2draft')
-        self.whole_graph_data, self.whole_graph_raw_id_2_id_dict, self.whole_graph_id_2_raw_id_dict, _ = translate_graph(whole_graph_data_raw, list(whole_graph_data_raw.nodes())[:1000])
+        self.whole_graph_raw_id_2_id_dict, self.whole_graph_id_2_raw_id_dict = translate_graph(whole_graph_data_raw)
 
         self.whole_graph_id_2_title_abs = dict()
         for paper_id in whole_graph_data_raw.nodes():
@@ -92,7 +84,7 @@ class LitFM():
 
 
     def _generate_retrieval_prompt(self, data_point: dict):
-        instruction = "Please select the paper that is more likely to be cited by the paper from candidate papers. Your answer MUST be **only the exact title** of the selected paper without generating ANY other text or section.\n"
+        instruction = "Please select the paper that is more likely to be cited by the paper from the list of candidate papers. Your answer MUST be **only the exact title** of the selected paper without generating ANY other text or section. Your answer MUST belong to the list of candidate papers.\n"
         prompt_input = ""
         prompt_input = prompt_input + data_point['usr_prompt'] + "\n"
         prompt_input = prompt_input + "candidate papers: " + "\n"
@@ -135,7 +127,7 @@ class LitFM():
 
         i = data_point['paper_citation_indicator']
         for paper_idx in range(len(data_point['nei_title'])):
-            prompt_input = prompt_input + "[" + str(i) + "]. " + data_point['nei_title'][paper_idx]  + '.' + " Citation sentence of this paper in the paragraph: " + data_point['nei_sentence'][paper_idx] + '\n'
+            prompt_input = prompt_input + "[" + str(i) + "]. " + data_point['nei_title'][paper_idx][0]  + '.' + " Citation sentence of this paper in the paragraph: " + data_point['nei_sentence'][paper_idx] + '\n'
             i += 1
         
         prompt_input = prompt_input + "All the above cited papers should be included and each cited paper should be indicated with its index number. Note that you should not include the title of any paper\n"
@@ -287,10 +279,10 @@ class LitFM():
             sentence_embedding = output[:, 0, :]
 
         tmp_scores = cosine_similarity(sentence_embedding.to("cpu"), all_query_embs.to("cpu"))[0]
-        _, idxs = torch.sort(torch.tensor(tmp_scores), descending = True)
+        _, idxs = torch.sort(torch.tensor(tmp_scores), descending=True)
         top_10 = [int(k) for k in idxs[:10]]
 
-        return [id_2_title_abs[i][0] for i in top_10] 
+        return [id_2_title_abs[i][0] for i in top_10], [self.whole_graph_id_2_raw_id_dict[i] for i in top_10]
 
 
     def single_paper_related_work_generation(self, usr_prompt):
@@ -318,11 +310,10 @@ class LitFM():
         # Get top-5 papers for each topic
         for retrieval_query in split_topics:
             # retrieve papers
-            candidate_citation_papers = self.retrieval_for_one_query(self.whole_graph_id_2_title_abs, retrieval_query)
-            
+            candidate_citation_papers, candidate_raw_ids = self.retrieval_for_one_query(self.whole_graph_id_2_title_abs, retrieval_query)
             topic_specific_citation_papers = []
             # select top-5 papers
-            for i in range(5):
+            for _ in range(5):
                 # picking most likely to be cited paper
                 selected_paper = self.single_paper_retrieval_test(usr_prompt, candidate_citation_papers).replace(' \n','').replace('\n','')
 
@@ -333,24 +324,29 @@ class LitFM():
                         index = int(w)
                     except:
                         pass
+                
                 if index != -1 and index < len(candidate_citation_papers):
                     paper_title = candidate_citation_papers[index]
                     candidate_citation_papers = list(set(candidate_citation_papers) - set([paper_title]))
-                    topic_specific_citation_papers.append(paper_title)
+                    topic_specific_citation_papers.append([paper_title, candidate_raw_ids[index]])
                 else:
-                    for paper_title in list(candidate_citation_papers):
-                        if paper_title.lower() in selected_paper.lower() or selected_paper.lower() in paper_title.lower():
+                    for i, paper_title in enumerate(list(candidate_citation_papers)):
+                        if paper_title.lower().replace(' ', '') in selected_paper.lower().replace(' ', '') or selected_paper.lower().replace(' ', '') in paper_title.lower().replace(' ', ''):
                             candidate_citation_papers = list(set(candidate_citation_papers) - set([paper_title]))
-                            topic_specific_citation_papers.append(paper_title)
+                            topic_specific_citation_papers.append([paper_title, candidate_raw_ids[i]])
                             break
             citation_papers.append(topic_specific_citation_papers)
+
+
+        # Remove empty lists
+        citation_papers = [x for x in citation_papers if x != []]
 
 
         # Generate citation sentences
         for topic_idx in range(len(citation_papers)):
             topic_specific_nei_sentence = []
             for paper_idx in range(len(citation_papers[topic_idx])):
-                sentence = self.single_paper_sentence_test(usr_prompt, citation_papers[topic_idx][paper_idx], "")
+                sentence = self.single_paper_sentence_test(usr_prompt, citation_papers[topic_idx][paper_idx][0], "")
                 # Match \cite{...}
                 sentence = re.sub(r'\\cite\{[^{}]+\}', "", sentence)
                 topic_specific_nei_sentence.append(sentence)
@@ -364,7 +360,7 @@ class LitFM():
         for topic_idx in range(len(citation_papers)):
             datapoint = {'usr_prompt': usr_prompt, 
                         'nei_title': citation_papers[topic_idx], 
-                        'nei_sentence': nei_sentence[topic_idx], 
+                        'nei_sentence': nei_sentence[topic_idx],
                         'topic': split_topics[topic_idx], 
                         'paper_citation_indicator': paper_citation_indicator}
             
@@ -375,8 +371,13 @@ class LitFM():
             
             # Store referencess
             for ref_idx, paper in enumerate(citation_papers[topic_idx]):
-                references.append(f"[{paper_citation_indicator + ref_idx}] {paper}")
-
+                # Extract year and month from raw_id
+                raw_id = re.sub(r'[a-zA-Z]+', '', paper[1])
+                year = raw_id[:2]
+                year = '19' + year if int(year) > 70 else '20' + year
+                month = datetime.date(1900, int(raw_id[2:4]), 1).strftime('%B')
+                
+                references.append(f"[{paper_citation_indicator + ref_idx}] {paper[0]}, arxiv, {month} {year}")
             # Update paper_citation_indicator
             paper_citation_indicator = paper_citation_indicator + len(nei_sentence[topic_idx])
 
