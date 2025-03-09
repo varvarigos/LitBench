@@ -348,7 +348,7 @@ def predict(message, history, selected_task):
         
 
         def generate_response(model, generate_kwargs, selected_task):
-            global out
+            global advanced_tasks_out
             if selected_task == "Abstract Completion":
                 prompt = abs_completion(message, template)
             elif selected_task == "Title Generation": 
@@ -364,24 +364,24 @@ def predict(message, history, selected_task):
             elif selected_task == "Influential Papers Recommendation":
                 if download_papers.value:
                     graph = nx.read_gexf(gexf_file)
-                    out = influential_papers(message, graph)
+                    advanced_tasks_out = influential_papers(message, graph)
                 else:
                     graph = nx.read_gexf(predef_graph)
-                    out = influential_papers(message, graph)
+                    advanced_tasks_out = influential_papers(message, graph)
             elif selected_task == "Related Work Generation":
                 adapter_path = (
-                    f"{config['model_output_dir']}/{config['model_name']}_{str(index)}_adapter_test_graph"
-                    if train_model.value else config["directories"]["pretrained_model"]
+                    f"{config['model_output_dir']}/{config['model_name']}_{config['index']}_adapter_test_graph"
+                    if train_model.value else config['directories']['pretrained_model']
                 )
                 if download_papers.value:
-                    out = gen_related_work(message, gexf_file, adapter_path)
+                    advanced_tasks_out = gen_related_work(message, gexf_file, adapter_path)
                 else:
-                    out = gen_related_work(message, predef_graph, adapter_path)
+                    advanced_tasks_out = gen_related_work(message, predef_graph, adapter_path)
             else:
                 prompt = conversation + f"<human>: {message}\n<bot>:"
 
             if selected_task != "Influential Papers Recommendation" and selected_task != "Related Work Generation":
-                model_inputs = tokenizer(prompt, return_tensors="pt").to(device)
+                model_inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
                 generate_kwargs["inputs"] = model_inputs["input_ids"]
                 generate_kwargs["attention_mask"] = model_inputs["attention_mask"]
 
@@ -396,8 +396,8 @@ def predict(message, history, selected_task):
                        "selected_task": selected_task
                     })
 
-        global out
-        out = None
+        global advanced_tasks_out
+        advanced_tasks_out = None
         t.start()
 
         # Stream the partial response
@@ -410,9 +410,9 @@ def predict(message, history, selected_task):
         else:
             if selected_task == "Related Work Generation":
                 yield "🔍 Generating related work..."
-            while out == None:
+            while advanced_tasks_out == None:
                 time.sleep(0.1)
-            yield out
+            yield advanced_tasks_out
 
     # Fetch arXiv papers if the user opted to download them
     if len(history) == 0:
@@ -434,7 +434,7 @@ def predict(message, history, selected_task):
             content = fetch_arxiv_papers(papers_to_download)
             yield content
             time.sleep(2.5)
-    
+
 
     # Train the model with the retrieved graph
     if len(history) == 0:
@@ -580,7 +580,6 @@ if __name__ == "__main__":
     config = read_yaml_file("conf/config.yaml")
     template_file_path = 'conf/alpaca.json'
     template = json.load(open(template_file_path, "r"))
-    device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
     seed_no = config['processing']['random_seed']
@@ -616,8 +615,9 @@ if __name__ == "__main__":
         bnb_8bit_compute_dtype=torch.bfloat16
     )
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(model_name, quantization_config=bnb_config, device_map={"":0})
-
+    model = AutoModelForCausalLM.from_pretrained(model_name, quantization_config=bnb_config)
+    if model.device.type != 'cuda':
+        model.to('cuda')
 
     signal.signal(signal.SIGINT, signal_handler)
 
