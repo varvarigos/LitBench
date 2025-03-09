@@ -16,3 +16,4 @@ nltk==3.9.1
 openai==1.63.0
 scikit-learn==1.6.1
 pandas==2.2.3
+datasets==3.3.2
