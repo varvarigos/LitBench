@@ -1,4 +1,3 @@
-import yaml
 import json
 import torch
 import random
@@ -10,15 +9,8 @@ from peft import (LoraConfig, get_peft_model,
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 import argparse
 import wandb
+from utils.utils import read_yaml_file
 
-
-def read_yaml_file(file_path):
-    with open(file_path, 'r') as file:
-        try:
-            data = yaml.safe_load(file)
-            return data
-        except yaml.YAMLError as e:
-            print(f"Error reading YAML file: {e}")
 
 
 class QloraTrainer_CS:
@@ -37,61 +29,28 @@ class QloraTrainer_CS:
         with open(template_file_path) as fp:
             self.template = json.load(fp)
 
-    def generate_prompt(
-        self,
-        instruction, 
-        input,
-        label,
-    ) -> str:
-        # returns the full prompt from instruction and optional input
-        # if a label (=response, =output) is provided, it's also appended.
-        if input:
-            res = self.template["prompt_input"].format(
-                instruction=instruction, input=input
-            )
-        else:
-            res = self.template["prompt_no_input"].format(
-                instruction=instruction
-            )
-        if label:
-            res = f"{res}{label}"
-        if self._verbose:
-            print(res)
-        return res
-
-    def get_response(self, output):
-        return output.split(self.template["response_split"])[1].strip()
 
     def load_base_model(self):
         model_id = self.config['train']['base_model']
         print(model_id)
 
-        if 'llama' in model_id:
-            bnb_config = BitsAndBytesConfig(
+        bnb_config = BitsAndBytesConfig(
             load_in_8bit=True,
             bnb_8bit_use_double_quant=True,
             bnb_8bit_quant_type="nf8",
             bnb_8bit_compute_dtype=torch.bfloat16
-            )
-            print('load llama 3')
-            tokenizer = AutoTokenizer.from_pretrained(model_id)
-            tokenizer.model_max_length = self.config['train']['tokenizer']["max_length"]
-            tokenizer.pad_token = tokenizer.eos_token
-            model = AutoModelForCausalLM.from_pretrained(model_id, quantization_config=bnb_config, torch_dtype=torch.bfloat16, device_map={"":0})
-        else:
-            bnb_config = BitsAndBytesConfig(
-            load_in_8bit=True,
-            bnb_8bit_use_double_quant=True,
-            bnb_8bit_quant_type="nf8",
-            bnb_8bit_compute_dtype=torch.bfloat16
-            )
-            max_length = self.config['train']['tokenizer']["max_length"]
-            tokenizer = AutoTokenizer.from_pretrained(model_id, model_max_length=max_length)
-            model = AutoModelForCausalLM.from_pretrained(model_id, quantization_config=bnb_config, device_map={"":0})
-            if not tokenizer.pad_token:
-                # Add padding token if missing, e.g. for llama tokenizer
-                # tokenizer.pad_token = tokenizer.eos_token  # https://github.com/huggingface/transformers/issues/22794
-                tokenizer.add_special_tokens({'pad_token': '[PAD]'})
+        )
+        print('load llama 3')
+        tokenizer = AutoTokenizer.from_pretrained(model_id)
+        tokenizer.model_max_length = self.config['train']['tokenizer']["max_length"]
+        tokenizer.pad_token = tokenizer.eos_token
+        model = AutoModelForCausalLM.from_pretrained(model_id, quantization_config=bnb_config, torch_dtype=torch.bfloat16)
+        if model.device.type != 'cuda':
+            model.to('cuda')
+        if not tokenizer.pad_token:
+            # Add padding token if missing, e.g. for llama tokenizer
+            # tokenizer.pad_token = tokenizer.eos_token  # https://github.com/huggingface/transformers/issues/22794
+            tokenizer.add_special_tokens({'pad_token': '[PAD]'})
 
         model.gradient_checkpointing_enable()
         model = prepare_model_for_kbit_training(model)
