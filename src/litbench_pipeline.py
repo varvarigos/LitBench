@@ -455,7 +455,8 @@ def predict(message, history, selected_task):
                     for key, value in data_graph.items()
                 }
                 
-                concept_data = load_dataset("json", data_files="datasets/arxiv_topics.jsonl")
+                
+                concept_data = load_dataset("AliMaatouk/arXiv_Topics")
                 id2topics = {
                     entry["paper_id"]: [entry["Level 1"], entry["Level 2"], entry["Level 3"]]
                     for entry in concept_data["train"]
