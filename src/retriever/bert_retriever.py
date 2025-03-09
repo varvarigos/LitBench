@@ -79,7 +79,7 @@ def retriever(query, retrieval_nodes_path):
         query_embeddings = outputs.last_hidden_state[:, 0, :].cpu()
     
     # Load the dataset
-    tmp_id_2_abs = load_dataset("json", data_files="datasets/arxiv_topics.jsonl")
+    tmp_id_2_abs = load_dataset("AliMaatouk/arXiv_Topics")
     paper_list = list(tmp_id_2_abs['train']['paper_id'])
     
     # if the file does not exist
