@@ -1,7 +1,6 @@
 import argparse
 import torch
 import json
-import yaml
 import random
 import networkx as nx
 import numpy as np
@@ -11,6 +10,7 @@ from transformers import AutoTokenizer, pipeline, AutoModelForCausalLM
 from bert_score import score
 from tqdm import tqdm
 import os
+from utils.utils import read_yaml_file
 
 """
 Ad-hoc sanity check to see if model outputs something coherent
@@ -20,14 +20,6 @@ Not a robust inference platform!
 def get_bert_score(candidate, reference):
     P, R, F1 = score([candidate], [reference],lang="en")
     return P, R, F1
-
-def read_yaml_file(file_path):
-    with open(file_path, 'r') as file:
-        try:
-            data = yaml.safe_load(file)
-            return data
-        except yaml.YAMLError as e:
-            print(f"Error reading YAML file: {e}")
 
 def _generate_LP_prompt(data_point: dict):
     instruction = "Determine if paper A will cite paper B."
@@ -60,7 +52,6 @@ def _generate_retrival_prompt(data_point: dict):
 
 
     return res, str(data_point['t_title'])
-
 
 def _generate_abstrat_2_title_prompt(data_point: dict):
     instruction = "Please generate the title of paper based on its abstract"
@@ -409,7 +400,9 @@ if __name__ == "__main__":
     model_path = config["eval"]["base_model"]
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-    base_model = AutoModelForCausalLM.from_pretrained(model_path, device_map="auto", torch_dtype=torch.bfloat16, load_in_8bit=True)
+    base_model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16, load_in_8bit=True)
+    if base_model.device.type != 'cuda':
+        base_model.to('cuda')
     tokenizer.model_max_length = 2048
     tokenizer.pad_token = tokenizer.eos_token
     
