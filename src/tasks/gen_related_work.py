@@ -10,6 +10,7 @@ The input
 The output
     - The output is a string that contains the related work section for the given paper.
 """
+
 import torch
 import json
 import networkx as nx
@@ -42,7 +43,7 @@ class LitFM():
         self.generation_tokenizer = AutoTokenizer.from_pretrained(model_path)
         self.generation_tokenizer.model_max_length = 2048
         self.generation_tokenizer.pad_token = self.generation_tokenizer.eos_token
-        self.generation_model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map="auto", )
+        self.generation_model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map="auto")
         self.generation_model = PeftModel.from_pretrained(self.generation_model, adapter_path, adapter_name="instruction", torch_dtype=torch.float16)
 
         # define instruction models
