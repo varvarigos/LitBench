@@ -7,13 +7,10 @@ The **Citation Link Prediction** task determines whether **Paper A** will cite *
 The user input must strictly follow the format below:
 
 ```
-Title A: <title of Paper A>
-
-Abstract A: <abstract of Paper A>
-
-Title B: <title of Paper B>
-
-Abstract B: <abstract of Paper B>
+Title of Paper A: <title of Paper A>
+Abstract of Paper A: <abstract of Paper A>
+Title of Paper B: <title of Paper B>
+Abstract of Paper B: <abstract of Paper B>
 ```
 
 - `<title of Paper A>`: The title of Paper A (the potential citing paper).
@@ -23,13 +20,10 @@ Abstract B: <abstract of Paper B>
 
 ### **Example Input**
 ```
-Title A: A Study on Machine Learning
-
-Abstract A: This paper presents a study on machine learning algorithms.
-
-Title B: A Survey on Deep Learning
-
-Abstract B: This paper presents a survey on deep learning algorithms.
+Title of Paper A: A Study on Machine Learning
+Abstract of Paper A: This paper presents a study on machine learning algorithms.
+Title of Paper B: A Survey on Deep Learning
+Abstract of Paper B: This paper presents a survey on deep learning algorithms.
 ```
 
 After receiving this input, the model will analyze the relationship between **Paper A and Paper B** and provide a **direct answer**:
