@@ -24,7 +24,7 @@ from tqdm import tqdm
 from colorama import Fore
 import wandb
 import gradio as gr
-from transformers import AutoModelForCausalLM, AutoTokenizer, StoppingCriteriaList, TextIteratorStreamer
+from transformers import AutoModelForCausalLM, AutoTokenizer, StoppingCriteriaList, TextIteratorStreamer, pipeline
 from threading import Thread
 import signal
 import gzip
@@ -109,7 +109,7 @@ def fetch_arxiv_papers(papers_to_download):
     num_papers, num_edges, t, iter_ind = 0, 0, 0, 0
     graph = {}
 
-    arxiv_rate_lim = config['data_downloading']['arxiv_rate_limit']
+    arxiv_rate_lim = config['data_downloading']['processing']['arxiv_rate_limit']
     for paper_name in tqdm(papers_to_download):
         results["Number of papers"] += 1
         print(
@@ -204,7 +204,7 @@ def fetch_arxiv_papers(papers_to_download):
                 content = read_tex_file(descr)
 
                 # If configured, store the raw content in the graph
-                if config['processing']['keep_unstructured_content']:
+                if config['data_downloading']['processing']['keep_unstructured_content']:
                     graph[paper_name] = {'content': content}
                 else:
                     graph[paper_name] = {}
@@ -337,31 +337,32 @@ def predict(message, history, selected_task):
 
         generate_kwargs = {
             "streamer": streamer,
-            "max_new_tokens": config['inference']['generate_kwargs']["max_new_tokens"],
-            "do_sample": config['inference']['generate_kwargs']["do_sample"],
-            "top_p": config['inference']['generate_kwargs']["top_p"],
-            "top_k": config['inference']['generate_kwargs']["top_k"],
-            "temperature": config['inference']['generate_kwargs']["temperature"],
-            "no_repeat_ngram_size": config['inference']['generate_kwargs']["no_repeat_ngram_size"],
-            "num_beams": config['inference']['generate_kwargs']["num_beams"],
+            "max_new_tokens": config['inference']['generation_args']["max_new_tokens"],
+            "do_sample": config['inference']['generation_args']["do_sample"],
+            "top_p": config['inference']['generation_args']["top_p"],
+            "top_k": config['inference']['generation_args']["top_k"],
+            "temperature": config['inference']['generation_args']["temperature"],
+            "no_repeat_ngram_size": config['inference']['generation_args']["no_repeat_ngram_size"],
+            "num_beams": config['inference']['generation_args']["num_beams"],
             "stopping_criteria": StoppingCriteriaList([stop]),
         }
         
-
         def generate_response(model, generate_kwargs, selected_task):
             global advanced_tasks_out
+            has_predefined_template = generate_kwargs["streamer"].tokenizer.chat_template is not None
+
             if selected_task == "Abstract Completion":
-                prompt = abs_completion(message, template)
+                prompt = abs_completion(message, template, has_predefined_template)
             elif selected_task == "Title Generation": 
-                prompt = abs_2_title(message, template)
+                prompt = abs_2_title(message, template, has_predefined_template)
             elif selected_task == "Citation Recommendation":
-                prompt = paper_retrieval(message, template)
+                prompt = paper_retrieval(message, template, has_predefined_template)
             elif selected_task == "Citation Sentence Generation":
-                prompt = citation_sentence(message, template)
+                prompt = citation_sentence(message, template, has_predefined_template)
             elif selected_task == "Citation Link Prediction":
-                prompt = link_pred(message, template)
+                prompt = link_pred(message, template, has_predefined_template)
             elif selected_task == "Introduction to Abstract":
-                prompt = intro_2_abs(message, template, tokenizer.model_max_length)
+                prompt = intro_2_abs(message, template, tokenizer.model_max_length, has_predefined_template)
             elif selected_task == "Influential Papers Recommendation":
                 if download_papers.value:
                     graph = nx.read_gexf(gexf_file)
@@ -382,12 +383,16 @@ def predict(message, history, selected_task):
                 prompt = conversation + f"<human>: {message}\n<bot>:"
 
             if selected_task != "Influential Papers Recommendation" and selected_task != "Related Work Generation":
-                model_inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
-                generate_kwargs["inputs"] = model_inputs["input_ids"]
-                generate_kwargs["attention_mask"] = model_inputs["attention_mask"]
+                if tokenizer.chat_template is not None:
+                    response = model_pipeline(prompt, **generate_kwargs)
+                    streamer.put(response[0]['generated_text'][-1])
+                else:
+                    model_inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
+                    generate_kwargs["inputs"] = model_inputs["input_ids"]
+                    generate_kwargs["attention_mask"] = model_inputs["attention_mask"]
 
-                response = model.generate(**generate_kwargs)
-                streamer.put(response)
+                    response = model.generate(**generate_kwargs)
+                    streamer.put(response)
 
         # Generate the response in a separate thread
         t = Thread(target=generate_response,
@@ -429,8 +434,6 @@ def predict(message, history, selected_task):
                 data_download = json.load(f)
 
             papers_to_download = list(data_download.keys())
-            import random
-            papers_to_download = random.sample(papers_to_download, 250)
 
             yield f"📥 Fetching {len(papers_to_download)} arXiv papers' source files... Please wait."
 
@@ -449,15 +452,15 @@ def predict(message, history, selected_task):
             # If the user opted to download papers, use the retrieved graph, else use the predefined graph
             if download_papers.value:
                 yield "🚀 Training the model with the retrieved graph..."
-                
+
                 with open(save_graph, "r") as f:
                     data_graph = json.load(f)
-                
+
                 renamed_data = {
                     "/".join(re.match(r"([a-z-]+)([0-9]+)", key, re.I).groups()) if re.match(r"([a-z-]+)([0-9]+)", key, re.I) else key: value
                     for key, value in data_graph.items()
                 }
-                
+
                 concept_data = load_dataset("json", data_files="datasets/arxiv_topics.jsonl")
                 id2topics = {
                     entry["paper_id"]: [entry["Level 1"], entry["Level 2"], entry["Level 3"]]
@@ -476,10 +479,10 @@ def predict(message, history, selected_task):
                 G = nx.DiGraph()
                 for k in renamed_data:
                     if k not in G and k in papers:
-                        if config['processing']['keep_unstructured_content']:
+                        if config['data_downloading']['processing']['keep_unstructured_content']:
                             G.add_node(
                                 k,
-                                title=papers[k]['title'],
+                                title=papers[k]['title'], 
                                 abstract=papers[k]['abstract'],
                                 introduction=renamed_data[k].get('Introduction', '') if renamed_data[k].get('Introduction', '') != '\n' else '',
                                 related=renamed_data[k].get('Related Work', '') if renamed_data[k].get('Related Work', '') != '\n' else '',
@@ -489,7 +492,7 @@ def predict(message, history, selected_task):
                         else:
                             G.add_node(
                                 k,
-                                title=papers[k]['title'],
+                                title=papers[k]['title'], 
                                 abstract=papers[k]['abstract'],
                                 introduction=renamed_data[k].get('Introduction', '') if renamed_data[k].get('Introduction', '') != '\n' else '',
                                 related=renamed_data[k].get('Related Work', '') if renamed_data[k].get('Related Work', '') != '\n' else '',
@@ -501,10 +504,10 @@ def predict(message, history, selected_task):
                             sentence = metadata.get('sentence', '')  # Extract sentence or default to empty string
 
                             if target not in G and target in papers:
-                                if config['processing']['keep_unstructured_content']:
+                                if config['data_downloading']['processing']['keep_unstructured_content']:
                                     G.add_node(
                                         target,
-                                        title=papers[target]['title'],
+                                        title=papers[target]['title'], 
                                         abstract=papers[target]['abstract'],
                                         introduction=renamed_data[target].get('Introduction', '') if target in renamed_data and renamed_data[target].get('Introduction', '') != '\n'  else '',
                                         related=renamed_data[target].get('Related Work', '') if target in renamed_data and renamed_data[target].get('Related Work', '') != '\n'  else '',
@@ -514,14 +517,14 @@ def predict(message, history, selected_task):
                                 else:
                                     G.add_node(
                                         target,
-                                        title=papers[target]['title'],
+                                        title=papers[target]['title'], 
                                         abstract=papers[target]['abstract'],
                                         introduction=renamed_data[target].get('Introduction', '') if target in renamed_data and renamed_data[target].get('Introduction', '') != '\n'  else '',
                                         related=renamed_data[target].get('Related Work', '') if target in renamed_data and renamed_data[target].get('Related Work', '') != '\n'  else '',
                                         concepts=", ".join(list(set(item for sublist in concept_data[target].values() for item in sublist))) if target in concept_data else ''
                                     )
 
-                            G.add_edge(source, target, sentence=sentence)
+                                G.add_edge(source, target, sentence=sentence)
 
                 G.remove_nodes_from(list(nx.isolates(G)))
 
@@ -584,9 +587,9 @@ if __name__ == "__main__":
     template = json.load(open(template_file_path, "r"))
 
 
-    seed_no = config['processing']['random_seed']
-    model_name = config['base_model']
-    working_dir = config['data_downloading']['working_directory']
+    seed_no = config['data_downloading']['processing']['random_seed']
+    model_name = config['inference']['base_model']
+    working_dir = config['data_downloading']['download_directory']
     save_zip_directory = working_dir + 'research_papers_zip/'
     save_directory = working_dir + 'research_papers/'
     save_description = working_dir + 'description/'
@@ -621,6 +624,14 @@ if __name__ == "__main__":
     model = AutoModelForCausalLM.from_pretrained(model_name, quantization_config=bnb_config)
     if model.device.type != 'cuda':
         model.to('cuda')
+
+    if tokenizer.chat_template is not None:
+        model_pipeline = pipeline(
+            "text-generation",
+            model=model_name,
+            model_kwargs={"torch_dtype": torch.bfloat16},
+            device_map="auto",
+        )
 
     signal.signal(signal.SIGINT, signal_handler)
 
