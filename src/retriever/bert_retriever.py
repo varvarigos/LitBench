@@ -7,6 +7,7 @@ import os
 import pandas as pd
 import numpy as np
 from datasets import load_dataset
+from utils.utils import read_yaml_file
 
 
 def generate_topic_level_embeddings(model, tokenizer, paper_list, tmp_id_2_abs):
@@ -63,23 +64,22 @@ def generate_topic_level_embeddings(model, tokenizer, paper_list, tmp_id_2_abs):
     })
     
     df.to_parquet('datasets/topic_level_embeds/arxiv_papers_embeds.parquet', engine='pyarrow', compression='snappy')
-    
 
 
-def retriever(query, retrieval_nodes_path):
-    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    os.environ["TOKENIZERS_PARALLELISM"] = "false"
-    
+
+def retriever(query, retrieval_nodes_path):    
     yield 0
-    tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-large-en-v1.5")
-    model = AutoModel.from_pretrained("BAAI/bge-large-en-v1.5").to(device='cuda', dtype=torch.float16)
+    config = read_yaml_file('configs/config.yaml')
+    embedder_name = config['retriever']['embedder']
+    tokenizer = AutoTokenizer.from_pretrained(embedder_name)
+    model = AutoModel.from_pretrained(embedder_name).to(device='cuda', dtype=torch.float16)
     inputs = tokenizer([query], return_tensors='pt', padding=True, truncation=True)
     with torch.no_grad():
         outputs = model(**inputs.to('cuda'))
         query_embeddings = outputs.last_hidden_state[:, 0, :].cpu()
     
     # Load the dataset
-    tmp_id_2_abs = load_dataset("AliMaatouk/arXiv_Topics")
+    tmp_id_2_abs = load_dataset("json", data_files="datasets/arxiv_topics.jsonl")
     paper_list = list(tmp_id_2_abs['train']['paper_id'])
     
     # if the file does not exist
@@ -87,6 +87,7 @@ def retriever(query, retrieval_nodes_path):
         yield from generate_topic_level_embeddings(model, tokenizer, paper_list, tmp_id_2_abs)
 
     dataset = load_dataset("AliMaatouk/arXiv-Topics-Embeddings")["train"]
+    
     table = dataset.data  # Get PyArrow Table
     all_candidate_embs = table.column("embedding").to_numpy()
     all_candidate_embs = np.stack(all_candidate_embs)
@@ -102,7 +103,7 @@ def retriever(query, retrieval_nodes_path):
         id_score_list.append([paper_list[i], similarity_scores[i]])
     
     sorted_scores = sorted(id_score_list, key=lambda i: i[-1], reverse = True)
-    top_K_paper = [sample[0] for sample in sorted_scores[:30000]]
+    top_K_paper = [sample[0] for sample in sorted_scores[:config['retriever']['num_retrievals']]]
 
     papers_results = {
         paper: True
