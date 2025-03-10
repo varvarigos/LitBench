@@ -7,7 +7,7 @@
 <br>
 
 
-# LitBench: A Large Language Model Benchmarking Framework For Literature Tasks
+# LitBench: A Graph-Centric Large Language Model Benchmarking Framework For Literature Tasks
 
 ## Overview
 
