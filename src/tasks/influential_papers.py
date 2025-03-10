@@ -36,4 +36,5 @@ def influential_papers(message, graph):
         month = datetime.date(1900, int(paper_id[2:4]), 1).strftime('%B')
         
         resp += f"{i+1}. Title: {paper['title']}, arXiv {full_paper_id}, {month} {year} \nAbstract: {paper['abstract']}\n"
+
     return resp
