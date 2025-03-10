@@ -9,13 +9,20 @@ Returns:
     str: A formatted string with the instruction and abstract to be used as input for generating the title.
 """
 
-def abs_2_title(usr_input, template):
+def abs_2_title(usr_input, template, has_predefined_template=False):
     instruction = "Please generate the title of paper based on its abstract"
 
     abstract = usr_input.split("Abstract: ")[1]
 
     prompt_input = ""
     prompt_input = prompt_input + "Abstract: " + abstract + "\n"
-    res = template["prompt_input"].format(instruction=instruction, input=prompt_input)
+    
+    if has_predefined_template:
+        res = [
+            {"role": "system", "content": instruction},
+            {"role": "user", "content": prompt_input},
+        ]
+    else:
+        res = template["prompt_input"].format(instruction=instruction, input=prompt_input)
 
     return res
