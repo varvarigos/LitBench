@@ -78,7 +78,7 @@ The LitBench user interface consists of two main stages: **preferences selection
 
 ### **1. Setting Preferences**
 Upon launching the interface, users are first directed to the preferences page, where they must specify:
-- Whether to **download** new papers and construct a dataset from scratch.
+- Whether to **download** new papers and construct a dataset from scratch, otherwise uses a pre-defined dataset set from the config file.
 - Whether to **train the model** on the retrieved/predetermined dataset or use a pre-trained model from the config file.
 
 Once preferences are set, users are directed to the chatbot interface.
