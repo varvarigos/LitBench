@@ -109,6 +109,7 @@ def fetch_arxiv_papers(papers_to_download):
     num_papers, num_edges, t, iter_ind = 0, 0, 0, 0
     graph = {}
 
+    arxiv_rate_lim = config['data_downloading']['arxiv_rate_limit']
     for paper_name in tqdm(papers_to_download):
         results["Number of papers"] += 1
         print(
@@ -284,8 +285,8 @@ def fetch_arxiv_papers(papers_to_download):
         # Ensure a minimum time gap of 3 seconds between iterations to avoid bans from arXiv
         t2 = time.time()  # End time
         elapsed_time = t2 - t1
-        if elapsed_time < 3:
-            time.sleep(3 - elapsed_time)
+        if elapsed_time < arxiv_rate_lim:
+            time.sleep(arxiv_rate_lim - elapsed_time)
 
 
     # Final saving of processed data
