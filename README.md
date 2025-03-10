@@ -11,13 +11,19 @@
 
 ## Overview
 
-LitBench is a benchmarking framework designed to **develop and evaluate domain-specific Large Language Models (LLMs)** tailored to literature-related tasks. While LLMs have become the **de facto tool** for such tasks, they still struggle to adapt to **domain-specific contexts, terminologies, and nomenclatures**—especially in tasks like related work generation, where nuanced domain knowledge is crucial. LitBench addresses this challenge by **curating domain-specific literature datasets** and enabling rigorous **benchmarking across literature-based tasks**.
+LitBench is a benchmarking framework designed to **retrieve, process, and fine-tune LLMs on academic literature-related tasks**. The pipeline follows these steps:
 
-At its core, LitBench employs a **data curation process** that generates **domain-specific literature sub-graphs** and constructs training datasets using the textual attributes of the resulting nodes and edges. These datasets **help LLMs internalize domain knowledge and relationships embedded in the curated graphs**, enhancing their ability to reason over specialized academic literature. 
+1. **Retrieve relevant papers**: Given a user query, LitBench finds the most relevant papers by computing **cosine similarity** between the query and available academic papers.
+2. **Download and clean papers**: The selected papers are retrieved from **arXiv** and processed to extract structured and unstructured content.
+3. **Construct a literature graph**: This graph contains key attributes such as:
+   - **Title, Abstract, Introduction**
+   - **Topics of the paper**
+   - **Citation sentences**
+   - **Full unstructured content (if desired)**
+   - **Edges representing citation relationships**
+4. **Fine-tune LLMs on graph-related tasks**: The constructed graph is used to develop and benchmark LLMs on **downstream literature tasks**, including **related work generation, citation prediction, and academic text analysis**.
 
-LitBench is designed with **flexibility** in mind, supporting the curation of **both broad high-level domains and specialized interdisciplinary niches**. In addition to dataset creation, LitBench defines a **comprehensive suite of literature tasks**—ranging from **node- and edge-level analyses** to **advanced applications like related work generation**—to rigorously evaluate model performance.
-
-Our results demonstrate that **small, domain-specific LLMs trained on LitBench datasets achieve competitive performance** compared to state-of-the-art models like **GPT-4 and DeepSeek-R1** on literature-related tasks. To enhance accessibility and usability, we open-source the framework alongside an **AI agent tool** that streamlines **data curation, model training, and evaluation**.
+LitBench provides a comprehensive framework to **curate, analyze, and benchmark domain-specific LLMs** on literature-related tasks.
 
 <p align="center">
   <img src="img/arxiv_logo.jpeg" alt="arXiv Logo" width="220"/>
@@ -25,15 +31,10 @@ Our results demonstrate that **small, domain-specific LLMs trained on LitBench d
 
 ## Key Features:
 
-- **Domain-Specific Adaptation**: Constructs **literature sub-graphs** and **training datasets** by extracting textual attributes from academic literature.
-
-- **Comprehensive Benchmarking**: Defines a **suite of literature tasks**, from **node- and edge-level analyses** to **advanced applications like related work generation**.
-
-- **Competitive Performance**: Demonstrates that **small, domain-specific LLMs trained on LitBench datasets** achieve results comparable to state-of-the-art models such as **GPT-4 and DeepSeek-R1**.
-
-- **Flexible and Scalable**: Supports literature graph curation across **both broad domains and specialized research areas**.
-
-- **Open-Source and Accessible**: Includes an **AI agent tool** to streamline **data curation, model training, and evaluation**.
+- **Automated Literature Retrieval**: Uses **cosine similarity** to identify and download the most relevant papers from **arXiv**.
+- **Graph Construction**: Extracts structured information from papers to build a **literature knowledge graph**.
+- **LLM Fine-Tuning & Benchmarking**: Uses the graph to train and evaluate models on **domain-specific literature tasks**.
+- **Open-Source & Scalable**: Provides an **AI agent tool** for seamless **data retrieval, graph construction, and model training**.
 
 ## Installation
 
