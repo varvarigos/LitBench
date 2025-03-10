@@ -520,7 +520,7 @@ def predict(message, history, selected_task):
                                         related=renamed_data[target].get('Related Work', '') if target in renamed_data and renamed_data[target].get('Related Work', '') != '\n'  else '',
                                         concepts=", ".join(list(set(item for sublist in concept_data[target].values() for item in sublist))) if target in concept_data else ''
                                     )
-                            
+
                             G.add_edge(source, target, sentence=sentence)
 
                 G.remove_nodes_from(list(nx.isolates(G)))
@@ -532,12 +532,11 @@ def predict(message, history, selected_task):
 
 
             wandb.init(project='qlora_train')
-            index = config['index']
 
             if download_papers.value:
-                trainer = QloraTrainer_CS(config=config, index=index, use_predefined_graph=False)
+                trainer = QloraTrainer_CS(config=config, use_predefined_graph=False)
             else:
-                trainer = QloraTrainer_CS(config=config, index=index, use_predefined_graph=True)
+                trainer = QloraTrainer_CS(config=config, use_predefined_graph=True)
 
             print("Load base model")
             trainer.load_base_model()
@@ -548,7 +547,7 @@ def predict(message, history, selected_task):
                 # Wait for the trainer to be initialized
                 while trainer.transformer_trainer is None:
                     time.sleep(0.5)
-                
+
                 time.sleep(1.5)
                 # Update the progress bar until training is complete
                 while trainer.transformer_trainer.state.global_step != trainer.transformer_trainer.state.max_steps:
@@ -569,9 +568,9 @@ def predict(message, history, selected_task):
 
             yield "🎉 Model training complete! Please provide your task prompt."
 
-            adapter_path = f"{config['model_output_dir']}/{config['model_name']}_{str(index)}_adapter_test_graph"
+            adapter_path = f"{config['model_saving']['model_output_dir']}/{config['model_saving']['model_name']}_{config['model_saving']['index']}_adapter_test_graph"
             peft_model = PeftModel.from_pretrained(model, adapter_path, torch_dtype=torch.float16)
-            
+
             # change the global model with peft model
             model = peft_model
 
