@@ -1,9 +1,26 @@
+# Note: In order to train the model and then evaluate the same model, you need to
+# make sure that the base_model to be the same in both the train and eval sections
+
+# Evaluation configuration
 eval:
   base_model: meta-llama/Llama-3.2-1B
   graph_path: datasets/quantum_graph.gexf
   model_name: llama_1b_qlora_uncensored
 
-train:
+# Training configuration
+training:
+  graph_path: datasets/quantum_graph.gexf # path to the graph file to train on
+  base_model: meta-llama/Llama-3.2-1B
+  trainer_args:
+    per_device_train_batch_size: 4
+    warmup_steps: 100
+    num_train_epochs: 1
+    learning_rate: 0.0002
+    lr_scheduler_type: 'cosine'
+    fp16: true
+    logging_steps: 1
+    save_steps: 50
+    trainer_output_dir: trainer_outputs/
   tokenizer:
     max_length: 1024
   qlora:
@@ -15,11 +32,6 @@ train:
     - k_proj
     - v_proj
     - o_proj
-    #- gate_proj
-    #- up_proj
-    #- down_proj
-  trainer_output_dir: trainer_outputs/
-  model_output_dir: models
-  model_name: llama_1b_qlora_uncensored
-  graph_path: datasets/quantum_graph.gexf
-  base_model: meta-llama/Llama-3.2-1B
+  model_saving:
+    model_output_dir: models  # model saved in {model_output_dir}/{model_name} after fine-tuning completion
+    model_name: llama_1b_qlora_uncensored
