@@ -29,14 +29,14 @@ import datetime
 
 class LitFM():
     def __init__(self, graph_path, adapter_path):
-        config_path = 'conf/config.yaml'
-        self.pretrained_model = 'BAAI/bge-large-en-v1.5'
         self.graph_name = graph_path.split('.')[0].split('/')[-1] if '/' in graph_path else graph_path.split('.')[0]
         self.batch_size = 32
         self.neigh_num = 4
 
-        config = read_yaml_file(config_path)
+        config = read_yaml_file('configs/config.yaml')
         retrieval_graph_path = graph_path
+
+        self.pretrained_model = config['retriever']['embedder']
 
         # define generation model
         model_path = config["base_model"]
@@ -78,7 +78,7 @@ class LitFM():
             self.whole_graph_id_2_title_abs[self.whole_graph_raw_id_2_id_dict[paper_id]] = [title, abstract]        
 
         # define prompt template
-        template_file_path = 'conf/alpaca.json'
+        template_file_path = 'configs/alpaca.json'
         with open(template_file_path) as fp:
             self.template = json.load(fp)
         self.human_instruction = ['### Input:', '### Response:']
@@ -378,7 +378,7 @@ class LitFM():
                 year = '19' + year if int(year) > 70 else '20' + year
                 month = datetime.date(1900, int(raw_id[2:4]), 1).strftime('%B')
                 
-                references.append(f"[{paper_citation_indicator + ref_idx}] {paper[0]}, arxiv, {month} {year}")
+                references.append(f"[{paper_citation_indicator + ref_idx}] {paper[0]}, arXiv {raw_id}, {month} {year}")
             # Update paper_citation_indicator
             paper_citation_indicator = paper_citation_indicator + len(nei_sentence[topic_idx])
 
