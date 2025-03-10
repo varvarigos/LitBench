@@ -22,7 +22,7 @@ This formatted prompt is then used as input for the model to generate a ranked l
 ### **Example Output**
 ```
 Here are the most influential papers:
-1. Title: Advances in Neural Networks
+1. Title: Advances in Neural Networks, arXiv 2012.56789, Dec 2020
    Abstract: This paper presents a comprehensive survey of neural network architectures and training techniques.
    
 2. Title: Deep Learning for Image Recognition
