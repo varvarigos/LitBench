@@ -11,7 +11,7 @@ Returns:
     str: A formatted string that combines the instruction and the prompt input with the provided titles and abstracts.
 """
 
-def citation_sentence(usr_input, template):
+def citation_sentence(usr_input, template, has_predefined_template=False):
     instruction = "Please generate the citation sentence of how Paper A cites paper B in its related work section. \n"
 
     title_A = usr_input.split("Title A: ")[1].split("\n\n")[0]
@@ -25,5 +25,12 @@ def citation_sentence(usr_input, template):
     prompt_input = prompt_input + "Title of Paper B: " + title_B + '\n'
     prompt_input = prompt_input + "Abstract of Paper B: " + abstract_B + '\n'
 
-    res = template["prompt_input"].format(instruction=instruction, input=prompt_input)
+    if has_predefined_template:
+        res = [
+            {"role": "system", "content": instruction},
+            {"role": "user", "content": prompt_input},
+        ]
+    else:
+        res = template["prompt_input"].format(instruction=instruction, input=prompt_input)
+
     return res
