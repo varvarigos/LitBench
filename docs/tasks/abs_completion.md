@@ -8,8 +8,7 @@ The user input must strictly follow the format below:
 
 ```
 Title: <title>
-
-Abstract: <abstract>
+Part of abstract: <abstract>
 ```
 
 - `<title>`: The title of the paper.
@@ -18,8 +17,7 @@ Abstract: <abstract>
 ### **Example Input**
 ```
 Title: Attention Is All You Need
-
-Abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration.
+Part of abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration.
 ```
 
 This formatted prompt is then used as input for the model to generate the completed abstract.
