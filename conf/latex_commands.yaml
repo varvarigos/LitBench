@@ -118,7 +118,6 @@ verbatim_to_delete: [
 ]
 
 two_arguments: [
-    #'markboth',
     'IEEEPARstart',
     'pgfdeclareplotmark',
     'setcounter',
@@ -161,6 +160,3 @@ replace_comments: [
     'newenvironment',
     'renewenvironment'
 ]
-
-
-
