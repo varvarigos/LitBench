@@ -25,9 +25,9 @@ Here are the most influential papers:
 1. Title: Advances in Neural Networks, arXiv 2012.56789, Dec 2020
    Abstract: This paper presents a comprehensive survey of neural network architectures and training techniques.
    
-2. Title: Deep Learning for Image Recognition
+2. Title: Deep Learning for Image Recognition, arXiv 2101.12345, Jan 2021
    Abstract: We introduce a novel deep learning model that achieves state-of-the-art accuracy on image classification tasks.
    
-3. Title: Graph-Based Learning Methods
+3. Title: Graph-Based Learning Methods, arXiv 2102.54321, Feb 2021
    Abstract: This work explores the use of graph-based algorithms for semi-supervised learning and knowledge extraction.
 ```
