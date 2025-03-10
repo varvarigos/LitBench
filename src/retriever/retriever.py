@@ -70,38 +70,51 @@ def generate_topic_level_embeddings(model, tokenizer, paper_list, tmp_id_2_abs):
 def retriever(query, retrieval_nodes_path):    
     yield 0
     config = read_yaml_file('configs/config.yaml')
+
+    # Load the model and tokenizer to generate the embeddings
     embedder_name = config['retriever']['embedder']
     tokenizer = AutoTokenizer.from_pretrained(embedder_name)
     model = AutoModel.from_pretrained(embedder_name).to(device='cuda', dtype=torch.float16)
+
+
+    # Load the arXiv dataset
+    tmp_id_2_abs = load_dataset("AliMaatouk/arXiv_Topics", cache_dir="datasets/arxiv_topics")
+    paper_list = list(tmp_id_2_abs['train']['paper_id'])
+
+
+    # Generate the query embeddings
     inputs = tokenizer([query], return_tensors='pt', padding=True, truncation=True)
     with torch.no_grad():
         outputs = model(**inputs.to('cuda'))
         query_embeddings = outputs.last_hidden_state[:, 0, :].cpu()
-    
-    # Load the dataset
-    tmp_id_2_abs = load_dataset("json", data_files="datasets/arxiv_topics.jsonl")
-    paper_list = list(tmp_id_2_abs['train']['paper_id'])
-    
-    # if the file does not exist
-    if not os.path.exists('datasets/topic_level_embeds/arxiv_papers_embeds.parquet'):
-        yield from generate_topic_level_embeddings(model, tokenizer, paper_list, tmp_id_2_abs)
 
-    dataset = load_dataset("AliMaatouk/arXiv-Topics-Embeddings")["train"]
-    
-    table = dataset.data  # Get PyArrow Table
-    all_candidate_embs = table.column("embedding").to_numpy()
+    # Generate the candidate embeddings
+    # Load the embeddings from the dataset, otherwise generate the embeddings and save them
+    if config['retriever']['load_arxiv_embeds']:
+        dataset = load_dataset("AliMaatouk/arXiv-Topics-Embeddings", cache_dir="datasets/topic_level_embeds")
+        table = dataset["train"].data  # Get PyArrow Table
+        all_candidate_embs = table.column("embedding").to_numpy()
+    else:        
+        # If the file does not exist, generate the embeddings, otherwise, load the embeddings
+        if not os.path.exists('datasets/topic_level_embeds/arxiv_papers_embeds.parquet'):
+            yield from generate_topic_level_embeddings(model, tokenizer, paper_list, tmp_id_2_abs)
+        
+        all_candidate_embs = torch.tensor(np.array(pd.read_parquet('datasets/topic_level_embeds/arxiv_papers_embeds.parquet')['embedding'].tolist()))
+        all_candidate_embs = all_candidate_embs.cpu().numpy()
+
     all_candidate_embs = np.stack(all_candidate_embs)
+
 
     # Calculate the cosine similarity between the query and all candidate embeddings
     query_embeddings = np.array(query_embeddings)
     similarity_scores = cosine_similarity(query_embeddings, all_candidate_embs)[0]
-    
+
 
     # Sort the papers by similarity scores and select the top K papers
     id_score_list = []
     for i in range(len(paper_list)):
         id_score_list.append([paper_list[i], similarity_scores[i]])
-    
+
     sorted_scores = sorted(id_score_list, key=lambda i: i[-1], reverse = True)
     top_K_paper = [sample[0] for sample in sorted_scores[:config['retriever']['num_retrievals']]]
 
@@ -112,5 +125,5 @@ def retriever(query, retrieval_nodes_path):
 
     with open(retrieval_nodes_path, 'w') as f:
         json.dump(papers_results, f)
-    
+
     yield 1.0
