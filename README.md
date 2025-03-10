@@ -32,6 +32,9 @@ Our results demonstrate that **small, domain-specific LLMs trained on LitBench d
 
 - **Open-Source and Accessible**: Includes an **AI agent tool** to streamline **data curation, model training, and evaluation**.
 
+<p align="center">
+  <img src="img/arxiv_logo.jpeg" alt="arXiv Logo" width="150"/>
+</p>
 
 ## Installation
 
