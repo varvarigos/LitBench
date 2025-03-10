@@ -43,7 +43,7 @@ training:
     rank: 8
     lora_alpha: 32
     lora_dropout: 0.05
-    target_modules:  # modules for which to train lora adapters
+    target_modules:          # modules for which to train lora adapters
     - q_proj
     - k_proj
     - v_proj
@@ -52,5 +52,5 @@ training:
 # Used only if training option is true to save and load the fine-tuned model
 model_saving:
   model_name: llama_1b_qlora_uncensored
-  model_output_dir: models   # model saved in {model_output_dir}/{model_name}_{index}
+  model_output_dir: models   # model saved in {model_output_dir}/{model_name}_{index} # model saved in {model_output_dir}/{model_name}_{index} after fine-tuning completion
   index: 1
