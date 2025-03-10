@@ -34,6 +34,7 @@ LitBench provides a comprehensive framework to **curate, analyze, and benchmark 
 - **Automated Literature Retrieval**: Uses **cosine similarity** to identify and download the most relevant papers from **arXiv**.
 - **Graph Construction**: Extracts structured information from papers to build a **literature knowledge graph**.
 - **LLM Fine-Tuning & Benchmarking**: Uses the graph to train and evaluate models on **domain-specific literature tasks**.
+- **User Interface (UI)**: Provides an intuitive UI for user interaction, enabling seamless query input, paper retrieval, and visualization of literature graphs.
 - **Open-Source & Scalable**: Provides an **AI agent tool** for seamless **data retrieval, graph construction, and model training**.
 
 ## Installation
