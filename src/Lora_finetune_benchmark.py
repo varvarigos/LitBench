@@ -9,16 +9,17 @@ from peft import (LoraConfig, get_peft_model,
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 
+
 class QloraTrainer_CS:
     def __init__(self, config: dict, use_predefined_graph=False):
         self.config = config
+        self.use_predefined_graph = use_predefined_graph
         self.tokenizer = None
         self.base_model = None
         self.adapter_model = None
         self.merged_model = None
         self.transformer_trainer = None
         self.test_data = None
-        self.use_predefined_graph = use_predefined_graph
 
         template_file_path = 'configs/alpaca.json'
         with open(template_file_path) as fp:
@@ -26,7 +27,7 @@ class QloraTrainer_CS:
 
 
     def load_base_model(self):
-        model_id = self.config["base_model"]
+        model_id = self.config['inference']["base_model"]
         print(model_id)
 
         bnb_config = BitsAndBytesConfig(
@@ -35,7 +36,6 @@ class QloraTrainer_CS:
             bnb_8bit_quant_type="nf8",
             bnb_8bit_compute_dtype=torch.bfloat16
         )
-        print('load llama 3')
         tokenizer = AutoTokenizer.from_pretrained(model_id)
         tokenizer.model_max_length = self.config['training']['tokenizer']["max_length"]
         if not tokenizer.pad_token:
@@ -118,10 +118,10 @@ class QloraTrainer_CS:
     def _process_data_instruction(self):
         context_window = self.tokenizer.model_max_length
         if self.use_predefined_graph:
-            graph_data = nx.read_gexf(self.config["training"]["predefined_graph_path"], node_type=None, relabel=False, version='1.2draft')
+            graph_data = nx.read_gexf('datasets/' + self.config["training"]["predefined_graph_path"], node_type=None, relabel=False, version='1.2draft')
         else:
-            graph_pathc = self.config['data_downloading']['working_directory'] + 'description/' + self.config['data_downloading']['gexf_file']
-            graph_data = nx.read_gexf(graph_pathc, node_type=None, relabel=False, version='1.2draft')
+            graph_path = self.config['data_downloading']['download_directory'] + 'description/' + self.config['data_downloading']['gexf_file']
+            graph_data = nx.read_gexf(graph_path, node_type=None, relabel=False, version='1.2draft')
         raw_graph = graph_data
 
         test_set_size = len(graph_data.nodes()) // 10
@@ -247,7 +247,7 @@ class QloraTrainer_CS:
             data_tokenized = [self.tokenizer.apply_chat_template(sample,  max_length=context_window, truncation=True, tokenize=False) for sample in tqdm(data_prompt)]
 
         return data_tokenized
-    
+
     
     def _generate_LP_prompt(self, data_point: dict):
         instruction = "Determine if paper A will cite paper B."
