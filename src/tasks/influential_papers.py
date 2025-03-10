@@ -16,8 +16,9 @@ import datetime
 import re
 
 def influential_papers(message, graph):
-    K = int(message.split(": ")[1])
-    
+    # Get integer number from message
+    K = int(re.search(r'\d+', message).group())
+
     in_degree = dict(graph.in_degree())
     sorted_in_degree = sorted(in_degree.items(), key=lambda x: x[1], reverse=True)
 
