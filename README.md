@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-        🤗 <a href="https://huggingface.co/datasets/AliMaatouk/arXiv_Topics"> arXiv Topics Dataset</a>&nbsp| 🤗 | <a href="https://huggingface.co/datasets/AliMaatouk/arXiv-Topics-Embeddings"> arXiv Topics Dataset Embeddings</a>
+        🤗 <a href="https://huggingface.co/datasets/AliMaatouk/arXiv_Topics"> arXiv Topics Dataset</a>&nbsp| 🤗 <a href="https://huggingface.co/datasets/AliMaatouk/arXiv-Topics-Embeddings"> arXiv Topics Dataset Embeddings</a>
 <br>
 
 
