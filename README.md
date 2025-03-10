@@ -22,6 +22,10 @@ Our results demonstrate that **small, domain-specific LLMs trained on LitBench d
 
 ## Key Features:
 
+<p align="center">
+  <img src="img/arxiv_logo.jpeg" alt="arXiv Logo" width="150"/>
+</p>
+
 - **Domain-Specific Adaptation**: Constructs **literature sub-graphs** and **training datasets** by extracting textual attributes from academic literature.
 
 - **Comprehensive Benchmarking**: Defines a **suite of literature tasks**, from **node- and edge-level analyses** to **advanced applications like related work generation**.
@@ -31,10 +35,6 @@ Our results demonstrate that **small, domain-specific LLMs trained on LitBench d
 - **Flexible and Scalable**: Supports literature graph curation across **both broad domains and specialized research areas**.
 
 - **Open-Source and Accessible**: Includes an **AI agent tool** to streamline **data curation, model training, and evaluation**.
-
-<p align="center">
-  <img src="img/arxiv_logo.jpeg" alt="arXiv Logo" width="150"/>
-</p>
 
 ## Installation
 
