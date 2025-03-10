@@ -39,17 +39,26 @@ class LitFM():
         self.pretrained_model = config['retriever']['embedder']
 
         # define generation model
-        model_path = config["base_model"]
+        model_path = config['inference']["base_model"]
         self.generation_tokenizer = AutoTokenizer.from_pretrained(model_path)
         self.generation_tokenizer.model_max_length = 2048
-        self.generation_tokenizer.pad_token = self.generation_tokenizer.eos_token
+        if self.generation_tokenizer.pad_token is None:
+            self.generation_tokenizer.pad_token = self.generation_tokenizer.eos_token
         self.generation_model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map="auto")
         self.generation_model = PeftModel.from_pretrained(self.generation_model, adapter_path, adapter_name="instruction", torch_dtype=torch.float16)
+        self.model_pipeline = None
+        if self.generation_tokenizer.chat_template is not None:
+            self.model_pipeline = pipeline(
+                "text-generation",
+                model=model_path,
+                model_kwargs={"torch_dtype": torch.bfloat16},
+                device_map="auto",
+            )
 
         # define instruction models
         self.instruction_pipe = pipeline(
             "text-generation",
-            model=config["instruction_model"],
+            model=config["inference"]["gen_related_work_instruct_model"],
             model_kwargs={"torch_dtype": torch.bfloat16},
             device_map="auto",
         )
@@ -91,8 +100,15 @@ class LitFM():
         prompt_input = prompt_input + "candidate papers: " + "\n"
         for i in range(len(data_point['nei_titles'])):
             prompt_input = prompt_input + str(i) + '. ' + data_point['nei_titles'][i] + "\n"
+        
+        if self.model_pipeline is not None:
+            res = [
+                {"role": "system", "content": instruction},
+                {"role": "user", "content": prompt_input},
+            ]
+        else:
+            res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
 
-        res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
         return res
 
     def _generate_sentence_prompt(self, data_point):
@@ -103,7 +119,13 @@ class LitFM():
         prompt_input = prompt_input + "Title of Paper B: " + (data_point['t_title'] if data_point['t_title'] != None else 'Unknown') + "\n"
         prompt_input = prompt_input + "Abstract of Paper B: " + (data_point['t_abs'] if data_point['t_abs'] != None else 'Unknown') + "\n"
 
-        res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
+        if self.model_pipeline is not None:
+            res = [
+                {"role": "system", "content": instruction},
+                {"role": "user", "content": prompt_input},
+            ]
+        else:
+            res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
 
         return res
 
@@ -112,7 +134,7 @@ class LitFM():
         prompt_input = prompt_input + "Here are the information of the paper: \n"
         prompt_input = prompt_input + data_point['usr_prompt'] + '\n'
         prompt_input = prompt_input + "Directlty give me the topics you select.\n"
-            
+
         res = [
             {"role": "system", "content": "I need to write the related work section for this paper. Could you suggest three most relevant topics to discuss in the related work section? Your answer should be strictly one topic after the other line by line with nothing else being generated and no further explanation/information.\n"},
             {"role": "user", "content": prompt_input},
@@ -199,15 +221,23 @@ class LitFM():
 
         if model_type == 'instruction':
             self.generation_model.set_adapter('instruction')
-            raw_output = self.generate_text(
-                prompt,
-                self.generation_tokenizer,
-                self.generation_model,
-                temperature=0.9,
-                top_p=0.95,
-                repetition_penalty=1.15,
-                max_new_tokens=256,
-            )
+            if self.model_pipeline is not None:
+                raw_output = self.model_pipeline(
+                    prompt,
+                    temperature=0.9,
+                    top_p=0.95,
+                    repetition_penalty=1.15,
+                )[0]['generated_text'][-1]
+            else:
+                raw_output = self.generate_text(
+                    prompt,
+                    self.generation_tokenizer,
+                    self.generation_model,
+                    temperature=0.9,
+                    top_p=0.95,
+                    repetition_penalty=1.15,
+                    max_new_tokens=256,
+                )
 
         return raw_output
 
