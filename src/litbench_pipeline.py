@@ -33,7 +33,7 @@ import torch
 from peft.peft_model import PeftModel
 from datasets import load_dataset
 
-
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 # Function to determine the chatbot's first message based on user choices
 def setup(download_option, train_option):
@@ -321,7 +321,7 @@ def predict(message, history, selected_task):
         if not download_papers.value and not train_model.value:
             yield "✅ Using model from configuration file..."
 
-            adapter_path = config["directories"]["pretrained_model"]
+            adapter_path = config["inference"]["pretrained_model"]
             peft_model = PeftModel.from_pretrained(model, adapter_path, torch_dtype=torch.float16)
 
             # change the global model with peft model
@@ -336,13 +336,13 @@ def predict(message, history, selected_task):
 
         generate_kwargs = {
             "streamer": streamer,
-            "max_new_tokens": config["generation"]["max_new_tokens"],
-            "do_sample": config["generation"]["do_sample"],
-            "top_p": config["generation"]["top_p"],
-            "top_k": config["generation"]["top_k"],
-            "temperature": config["generation"]["temperature"],
-            "no_repeat_ngram_size": config["generation"]["no_repeat_ngram_size"],
-            "num_beams": config["generation"]["num_beams"],
+            "max_new_tokens": config['inference']['generate_kwargs']["max_new_tokens"],
+            "do_sample": config['inference']['generate_kwargs']["do_sample"],
+            "top_p": config['inference']['generate_kwargs']["top_p"],
+            "top_k": config['inference']['generate_kwargs']["top_k"],
+            "temperature": config['inference']['generate_kwargs']["temperature"],
+            "no_repeat_ngram_size": config['inference']['generate_kwargs']["no_repeat_ngram_size"],
+            "num_beams": config['inference']['generate_kwargs']["num_beams"],
             "stopping_criteria": StoppingCriteriaList([stop]),
         }
         
@@ -370,8 +370,8 @@ def predict(message, history, selected_task):
                     advanced_tasks_out = influential_papers(message, graph)
             elif selected_task == "Related Work Generation":
                 adapter_path = (
-                    f"{config['model_output_dir']}/{config['model_name']}_{config['index']}_adapter_test_graph"
-                    if train_model.value else config['directories']['pretrained_model']
+                    f"{config['model_saving']['model_output_dir']}/{config['model_saving']['model_name']}_{config['model_saving']['index']}_adapter_test_graph"
+                    if train_model.value else config['inference']['pretrained_model']
                 )
                 if download_papers.value:
                     advanced_tasks_out = gen_related_work(message, gexf_file, adapter_path)
@@ -428,6 +428,8 @@ def predict(message, history, selected_task):
                 data_download = json.load(f)
 
             papers_to_download = list(data_download.keys())
+            import random
+            papers_to_download = random.sample(papers_to_download, 250)
 
             yield f"📥 Fetching {len(papers_to_download)} arXiv papers' source files... Please wait."
 
@@ -455,8 +457,7 @@ def predict(message, history, selected_task):
                     for key, value in data_graph.items()
                 }
                 
-                
-                concept_data = load_dataset("AliMaatouk/arXiv_Topics")
+                concept_data = load_dataset("json", data_files="datasets/arxiv_topics.jsonl")
                 id2topics = {
                     entry["paper_id"]: [entry["Level 1"], entry["Level 2"], entry["Level 3"]]
                     for entry in concept_data["train"]
@@ -578,21 +579,22 @@ def predict(message, history, selected_task):
 if __name__ == "__main__":
     print("This is running in a virtual environment: {}".format(is_venv()))
 
-    config = read_yaml_file("conf/config.yaml")
-    template_file_path = 'conf/alpaca.json'
+    config = read_yaml_file("configs/config.yaml")
+    template_file_path = 'configs/alpaca.json'
     template = json.load(open(template_file_path, "r"))
 
 
     seed_no = config['processing']['random_seed']
     model_name = config['base_model']
-    save_zip_directory = config['directories']['save_zip_directory']
-    save_directory = config['directories']['save_directory']
-    save_description = config['directories']['save_description']
+    working_dir = config['data_downloading']['working_directory']
+    save_zip_directory = working_dir + 'research_papers_zip/'
+    save_directory = working_dir + 'research_papers/'
+    save_description = working_dir + 'description/'
     save_path = save_description + 'results.json'
-    save_graph = config['directories']['save_graph']
-    gexf_file = config['directories']['gexf_file']
-    retrieval_nodes_path = config['directories']['retrieval_nodes_path']
-    predef_graph = config['directories']['predefined_graph_path']
+    save_graph = save_description + 'test_graph.json'
+    gexf_file = save_description + config['data_downloading']['gexf_file']
+    predef_graph = 'datasets/' + config['training']['predefined_graph_path']
+    retrieval_nodes_path = 'datasets/retrieval_nodes.json'
 
     isExist = os.path.exists(save_zip_directory)
     if not isExist:
