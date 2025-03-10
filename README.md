@@ -1,4 +1,11 @@
-<img src="img/litbench_interface.jpeg" alt="LitBench Interface" width="950">
+<p align="center">
+  <img src="img/litbench_interface.jpeg" alt="LitBench Interface" width="950"/>
+</p>
+
+<p align="center">
+        🤗 <a href="https://huggingface.co/datasets/AliMaatouk/arXiv_Topics"> arXiv Topics Dataset</a>&nbsp| 🤗 <a href="https://huggingface.co/collections/AliMaatouk/tele-datasets-66df13c2c93721c02f38b8d0"> Datasets on HF</a>&nbsp | <a href="https://huggingface.co/datasets/AliMaatouk/arXiv-Topics-Embeddings"> arXiv Topics Dataset Embeddings</a>
+<br>
+
 
 # LitBench: A Large Language Model Benchmarking Framework For Literature Tasks
 
@@ -16,19 +23,14 @@ Our results demonstrate that **small, domain-specific LLMs trained on LitBench d
 ## Key Features:
 
 - **Domain-Specific Adaptation**: Constructs **literature sub-graphs** and **training datasets** by extracting textual attributes from academic literature.
-  
+
 - **Comprehensive Benchmarking**: Defines a **suite of literature tasks**, from **node- and edge-level analyses** to **advanced applications like related work generation**.
-  
+
 - **Competitive Performance**: Demonstrates that **small, domain-specific LLMs trained on LitBench datasets** achieve results comparable to state-of-the-art models such as **GPT-4 and DeepSeek-R1**.
-  
+
 - **Flexible and Scalable**: Supports literature graph curation across **both broad domains and specialized research areas**.
-  
+
 - **Open-Source and Accessible**: Includes an **AI agent tool** to streamline **data curation, model training, and evaluation**.
-
-
-## Topics refined dataset
-
-The dataset [`arXiv_Topics`](https://huggingface.co/datasets/AliMaatouk/arXiv_Topics) from Hugging Face provides a structured mapping of arXiv papers to hierarchical topic categories. We provide an embedding representation of this dataset in [`arXiv-Topics-Embeddings`](https://huggingface.co/datasets/AliMaatouk/arXiv-Topics-Embeddings).
 
 
 ## Installation
