@@ -1,15 +1,15 @@
 data_downloading:
-  download_directory: "quant_bio_retrieval/"
-  gexf_file: "test_graph.gexf" # name of the graph file that will be created only if downloading option is true
+  download_directory: "quant_bio_retrieval/"    # directory where the papers will be downloaded and the graph will be saved
+  gexf_file: "test_graph.gexf"                  # name of the graph file that will be created only if downloading option is true
   processing:
     random_seed: 10
-    keep_unstructured_content: false # keep unstructured content of the papers as graph node attribute if true
-    arxiv_rate_limit: 3 # time in seconds to wait between each arxiv api call to avoid ban
+    keep_unstructured_content: false            # keep unstructured content of the papers as graph node attribute if true
+    arxiv_rate_limit: 3                         # time in seconds to wait between each arxiv api call to avoid ban
 
 retriever:
   embedder: BAAI/bge-large-en-v1.5
   num_retrievals: 30000
-  arxiv_embeds_download: True # download arxiv embeddings if true else generate them; if already downloaded/generated, they will not be generated again
+  load_arxiv_embeds: True                       # load arxiv embeddings from huggingface if true else generate them
 
 inference:
   base_model: meta-llama/Meta-Llama-3-8B
@@ -22,10 +22,10 @@ inference:
     temperature: 0.7
     no_repeat_ngram_size: 2
     num_beams: 1
-  gen_related_work_instruct_model: meta-llama/Llama-3.1-8B-Instruct # Model assisting at the generation of related work instructions
+  gen_related_work_instruct_model: meta-llama/Llama-3.1-8B-Instruct      # Model assisting at the generation of related work instructions
 
 training:
-  predefined_graph_path: "robotics.gexf" # path to the graph dataset used for fine-tuning only if downloading option is false
+  predefined_graph_path: "robotics.gexf"                                 # path to the graph dataset used for fine-tuning only if downloading option is false
   trainer_args:
     per_device_train_batch_size: 4
     warmup_steps: 100
@@ -52,5 +52,5 @@ training:
 # Used only if training option is true to save and load the fine-tuned model
 model_saving:
   model_name: llama_1b_qlora_uncensored
-  model_output_dir: models   # model saved in {model_output_dir}/{model_name}
+  model_output_dir: models   # model saved in {model_output_dir}/{model_name}_{index}
   index: 1
