@@ -20,7 +20,7 @@ LitBench is designed with **flexibility** in mind, supporting the curation of **
 Our results demonstrate that **small, domain-specific LLMs trained on LitBench datasets achieve competitive performance** compared to state-of-the-art models like **GPT-4 and DeepSeek-R1** on literature-related tasks. To enhance accessibility and usability, we open-source the framework alongside an **AI agent tool** that streamlines **data curation, model training, and evaluation**.
 
 <p align="center">
-  <img src="img/arxiv_logo.jpeg" alt="arXiv Logo" width="150"/>
+  <img src="img/arxiv_logo.jpeg" alt="arXiv Logo" width="350"/>
 </p>
 
 ## Key Features:
