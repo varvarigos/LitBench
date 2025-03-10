@@ -119,7 +119,7 @@ def remove_tilde(s):
 
 
 def remove_verbatim_words(s):
-    with open("conf/specific_commands.yaml", "r") as stream:
+    with open("configs/latex_commands.yaml", "r") as stream:
         read_config = yaml.safe_load(stream)
     
     for command in read_config['verbatim_to_delete']:
@@ -226,7 +226,7 @@ def get_main(directory):
 def initial_clean(directory, config):
     config_cmd = ''
     if config == True:
-        config_cmd = '--config conf/cleaning_config.yaml'
+        config_cmd = '--config configs/cleaning_config.yaml'
     temp_dir = directory[:directory.rfind('/')] + '_temp' + '/'
     shutil.copytree(directory, temp_dir)
     try:
@@ -265,7 +265,7 @@ def post_processing(extracted_dir, file):
     _dir = os.path.dirname(file) + '/'
     perl_expand(file)
     file = _dir + 'merged_latexpand.tex'
-    try: 
+    try:
         de_macro(file)
         file = _dir + 'merged_latexpand-clean.tex'
     except Exception as e:
@@ -278,7 +278,7 @@ def post_processing(extracted_dir, file):
         declare_operator(file) # has additional add-ons 
     except Exception as e:
         pass
-    try: 
+    try:
         de_macro(file)
         file = _dir + os.path.splitext(os.path.basename(file))[0] + '-clean' + '.tex'
     except Exception as e:
