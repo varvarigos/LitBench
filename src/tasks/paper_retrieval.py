@@ -7,7 +7,7 @@ Returns:
     str: A string containing the prompt input for the user.
 """
 
-def paper_retrieval(usr_input, template):
+def paper_retrieval(usr_input, template, has_predefined_template=False):
     instruction = "Please select the paper that is more likely to be cited by paper A from candidate papers."
 
     title_1 = usr_input.split("Title of the Paper A: ")[1].split("\n\n")[0]
@@ -27,6 +27,12 @@ def paper_retrieval(usr_input, template):
 
     prompt_input = prompt_input + "Give me the title of your selected paper."
 
-    res = template["prompt_input"].format(instruction=instruction, input=prompt_input)
+    if has_predefined_template:
+        res = [
+            {"role": "system", "content": instruction},
+            {"role": "user", "content": prompt_input},
+        ]
+    else:
+        res = template["prompt_input"].format(instruction=instruction, input=prompt_input)
 
     return res
