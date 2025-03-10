@@ -14,13 +14,8 @@ Returns:
 def intro_2_abs(usr_prompt, template, context_window, has_predefined_template=False):
     instruction = "Please generate the abstract of paper based on its introduction section."
 
-    introduction = usr_prompt.split("Introduction: ")[1]
-
-    prompt_input = ""
-    prompt_input = prompt_input + "Introduction: " + introduction + "\n"
-
     # Reduce it to make it fit
-    prompt_input = prompt_input[:int(context_window*2)]
+    prompt_input = usr_prompt[:int(context_window*2)]
 
     if has_predefined_template:
         res = [
