@@ -33,7 +33,7 @@ import torch
 from peft.peft_model import PeftModel
 from datasets import load_dataset
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 
 # Function to determine the chatbot's first message based on user choices
 def setup(download_option, train_option):
