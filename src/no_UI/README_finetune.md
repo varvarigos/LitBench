@@ -1,17 +1,17 @@
-# **Bulk Fine-Tuning for Literature-Based LLMs**
+# **Fine-Tuning for Literature-Based LLMs (without User Interface)**
 
 ## **Overview**
-`bulk_finetune.py` is a script designed to **fine-tune large language models (LLMs) on literature-based tasks** using **QLoRA**. The script supports **training domain-specific models** for citation reasoning, abstract generation, retrieval, and more. It leverages **LoRA adapters** to enable efficient fine-tuning on consumer-grade GPUs.
+`finetune_noUI.py` is a script designed to **fine-tune large language models (LLMs) on literature-based tasks** using **QLoRA**. The script supports **training domain-specific models** for citation reasoning, abstract generation, retrieval, and more. It leverages **LoRA adapters** to enable efficient fine-tuning on consumer-grade GPUs.
 
 The script reads **a citation graph dataset**, constructs training prompts for multiple tasks, and fine-tunes an LLM using the QLoRA framework. The resulting **LoRA-adapted model** can then be used for inference or further training.
 
 ---
 
 ## **Usage**
-To run `bulk_finetune.py`, execute the following command:
+To run `finetune_noUI.py`, execute the following command:
 
 ```bash
-python3.10 src/bulk/bulk_finetune.py conf/config_bulk.yaml --index 1
+python3.10 src/no_UI/finetune_noUI.py configs/config_noUI.yaml --index 1
 ```
 
 ## **Command-Line Arguments**
