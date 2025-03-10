@@ -10,18 +10,17 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 
 class QloraTrainer_CS:
-    def __init__(self, config: dict, index, use_predefined_graph=False):
+    def __init__(self, config: dict, use_predefined_graph=False):
         self.config = config
         self.tokenizer = None
         self.base_model = None
         self.adapter_model = None
         self.merged_model = None
-        self.index = index
         self.transformer_trainer = None
         self.test_data = None
         self.use_predefined_graph = use_predefined_graph
 
-        template_file_path = 'conf/alpaca.json'
+        template_file_path = 'configs/alpaca.json'
         with open(template_file_path) as fp:
             self.template = json.load(fp)
 
@@ -38,15 +37,12 @@ class QloraTrainer_CS:
         )
         print('load llama 3')
         tokenizer = AutoTokenizer.from_pretrained(model_id)
-        tokenizer.model_max_length = self.config['tokenizer']["max_length"]
-        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.model_max_length = self.config['training']['tokenizer']["max_length"]
+        if not tokenizer.pad_token:
+            tokenizer.pad_token = tokenizer.eos_token
         model = AutoModelForCausalLM.from_pretrained(model_id, quantization_config=bnb_config, torch_dtype=torch.bfloat16)
         if model.device.type != 'cuda':
             model.to('cuda')
-        if not tokenizer.pad_token:
-            # Add padding token if missing, e.g. for llama tokenizer
-            # tokenizer.pad_token = tokenizer.eos_token  # https://github.com/huggingface/transformers/issues/22794
-            tokenizer.add_special_tokens({'pad_token': '[PAD]'})
 
         model.gradient_checkpointing_enable()
         model = prepare_model_for_kbit_training(model)
@@ -58,10 +54,10 @@ class QloraTrainer_CS:
     def train(self):        
         # Set up lora config or load pre-trained adapter
         lora_config = LoraConfig(
-            r=self.config['qlora']['rank'],
-            lora_alpha=self.config['qlora']['lora_alpha'],
-            target_modules=self.config['qlora']['target_modules'],
-            lora_dropout=self.config['qlora']['lora_dropout'],
+            r=self.config['training']['qlora']['rank'],
+            lora_alpha=self.config['training']['qlora']['lora_alpha'],
+            target_modules=self.config['training']['qlora']['target_modules'],
+            lora_dropout=self.config['training']['qlora']['lora_dropout'],
             bias="none",
             task_type="CAUSAL_LM",
         )
@@ -78,17 +74,17 @@ class QloraTrainer_CS:
             model=model,
             train_dataset=train_data,
             args=transformers.TrainingArguments(
-                per_device_train_batch_size=self.config["training"]["per_device_train_batch_size"],
-                gradient_accumulation_steps=int(self.index),
-                warmup_steps=self.config["training"]["warmup_steps"],
-                num_train_epochs=self.config["training"]["num_train_epochs"],
-                learning_rate=self.config["training"]["learning_rate"],
-                lr_scheduler_type=self.config["training"]["lr_scheduler_type"],
-                fp16=self.config["training"]["fp16"],
-                logging_steps=self.config["training"]["logging_steps"],
-                output_dir=self.config["trainer_output_dir"],
+                per_device_train_batch_size=self.config["training"]['trainer_args']["per_device_train_batch_size"],
+                gradient_accumulation_steps=self.config['model_saving']['index'],
+                warmup_steps=self.config["training"]['trainer_args']["warmup_steps"],
+                num_train_epochs=self.config["training"]['trainer_args']["num_train_epochs"],
+                learning_rate=self.config["training"]['trainer_args']["learning_rate"],
+                lr_scheduler_type=self.config["training"]['trainer_args']["lr_scheduler_type"],
+                fp16=self.config["training"]['trainer_args']["fp16"],
+                logging_steps=self.config["training"]['trainer_args']["logging_steps"],
+                output_dir=self.config["training"]['trainer_args']["trainer_output_dir"],
                 report_to="wandb",
-                save_steps=self.config["training"]["save_steps"],
+                save_steps=self.config["training"]['trainer_args']["save_steps"],
             ),
             data_collator=transformers.DataCollatorForLanguageModeling(self.tokenizer, mlm=False),
         )
@@ -97,7 +93,7 @@ class QloraTrainer_CS:
 
         self.transformer_trainer.train()
 
-        model_save_path = f"{self.config['model_output_dir']}/{self.config['model_name']}_{str(self.index)}_adapter_test_graph"
+        model_save_path = f"{self.config['model_saving']['model_output_dir']}/{self.config['model_saving']['model_name']}_{self.config['model_saving']['index']}_adapter_test_graph"
         self.transformer_trainer.save_model(model_save_path)
 
         self.adapter_model = model
@@ -122,9 +118,10 @@ class QloraTrainer_CS:
     def _process_data_instruction(self):
         context_window = self.tokenizer.model_max_length
         if self.use_predefined_graph:
-            graph_data = nx.read_gexf(self.config["directories"]["predefined_graph_path"], node_type=None, relabel=False, version='1.2draft')
+            graph_data = nx.read_gexf(self.config["training"]["predefined_graph_path"], node_type=None, relabel=False, version='1.2draft')
         else:
-            graph_data = nx.read_gexf(self.config["directories"]["gexf_file"], node_type=None, relabel=False, version='1.2draft')
+            graph_pathc = self.config['data_downloading']['working_directory'] + 'description/' + self.config['data_downloading']['gexf_file']
+            graph_data = nx.read_gexf(graph_pathc, node_type=None, relabel=False, version='1.2draft')
         raw_graph = graph_data
 
         test_set_size = len(graph_data.nodes()) // 10
@@ -247,9 +244,7 @@ class QloraTrainer_CS:
         if self.tokenizer.chat_template is None:
             data_tokenized = [self.tokenizer(sample,  max_length=context_window, truncation=True) for sample in tqdm(data_prompt)]
         else:
-            data_tokenized = [self.tokenizer.apply_chat_template(sample,  max_length=context_window, truncation=True) for sample in tqdm(data_prompt)]
-
-        print("Total tokenized prompts:", len(data_tokenized))
+            data_tokenized = [self.tokenizer.apply_chat_template(sample,  max_length=context_window, truncation=True, tokenize=False) for sample in tqdm(data_prompt)]
 
         return data_tokenized
     
