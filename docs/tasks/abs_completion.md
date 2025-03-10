@@ -13,7 +13,7 @@ Abstract: <abstract>
 ```
 
 - `<title>`: The title of the paper.
-- `<abstract>`: The partial abstract provided for completion.
+- `<abstract>`: The partial abstract provided for completion. Note that the abstract field could be empty as well.
 
 ### **Example Input**
 ```
