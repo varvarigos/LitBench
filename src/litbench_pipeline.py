@@ -1,4 +1,4 @@
-from Lora_finetune_benchmark import *
+from train import *
 from utils.utils import *
 from utils.graph_utils import *
 from utils.gradio_utils import *
