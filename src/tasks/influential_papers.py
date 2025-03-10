@@ -29,11 +29,11 @@ def influential_papers(message, graph):
 
     resp = "Here are the most influential papers:\n"
     for i, paper in enumerate(most_cited_papers):
-        paper_id = paper['label']
-        paper_id = re.sub(r'[a-zA-Z/]+', '', paper_id)
+        full_paper_id = paper['label']
+        paper_id = re.sub(r'[a-zA-Z/]+', '', full_paper_id)
         year = paper_id[:2]
         year = '19' + year if int(year) > 70 else '20' + year
         month = datetime.date(1900, int(paper_id[2:4]), 1).strftime('%B')
         
-        resp += f"{i+1}. Title: {paper['title']}, arxiv, {month} {year} \nAbstract: {paper['abstract']}\n"
+        resp += f"{i+1}. Title: {paper['title']}, arXiv {full_paper_id}, {month} {year} \nAbstract: {paper['abstract']}\n"
     return resp
