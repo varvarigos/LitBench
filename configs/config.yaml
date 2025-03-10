@@ -34,7 +34,6 @@ training:
     lr_scheduler_type: 'cosine'
     fp16: true
     logging_steps: 1
-    report_to: "wandb"
     save_steps: 50
     trainer_output_dir: trainer_outputs/
   tokenizer:
