@@ -2,7 +2,7 @@ from Lora_finetune_benchmark import *
 from utils.utils import *
 from utils.graph_utils import *
 from utils.gradio_utils import *
-from retriever.bert_retriever import retriever
+from retriever.retriever import retriever
 from tasks.abs_2_title import abs_2_title
 from tasks.abs_completion import abs_completion
 from tasks.citation_sentence import citation_sentence
@@ -461,7 +461,7 @@ def predict(message, history, selected_task):
                     for key, value in data_graph.items()
                 }
 
-                concept_data = load_dataset("json", data_files="datasets/arxiv_topics.jsonl")
+                concept_data = load_dataset("AliMaatouk/arXiv_Topics", cache_dir="datasets/arxiv_topics")
                 id2topics = {
                     entry["paper_id"]: [entry["Level 1"], entry["Level 2"], entry["Level 3"]]
                     for entry in concept_data["train"]
