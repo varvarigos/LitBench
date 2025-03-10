@@ -25,13 +25,13 @@ class QloraTrainer_CS:
         self.test_data = None
         self.use_predefined_graph = use_predefined_graph
 
-        template_file_path = 'conf/alpaca.json'
+        template_file_path = 'configs/alpaca.json'
         with open(template_file_path) as fp:
             self.template = json.load(fp)
 
 
     def load_base_model(self):
-        model_id = self.config['train']['base_model']
+        model_id = self.config['training']['base_model']
         print(model_id)
 
         bnb_config = BitsAndBytesConfig(
@@ -42,15 +42,12 @@ class QloraTrainer_CS:
         )
         print('load llama 3')
         tokenizer = AutoTokenizer.from_pretrained(model_id)
-        tokenizer.model_max_length = self.config['train']['tokenizer']["max_length"]
-        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.model_max_length = self.config['training']['tokenizer']["max_length"]
+        if not tokenizer.pad_token:
+            tokenizer.pad_token = tokenizer.eos_token
         model = AutoModelForCausalLM.from_pretrained(model_id, quantization_config=bnb_config, torch_dtype=torch.bfloat16)
         if model.device.type != 'cuda':
             model.to('cuda')
-        if not tokenizer.pad_token:
-            # Add padding token if missing, e.g. for llama tokenizer
-            # tokenizer.pad_token = tokenizer.eos_token  # https://github.com/huggingface/transformers/issues/22794
-            tokenizer.add_special_tokens({'pad_token': '[PAD]'})
 
         model.gradient_checkpointing_enable()
         model = prepare_model_for_kbit_training(model)
@@ -62,10 +59,10 @@ class QloraTrainer_CS:
     def train(self):        
         # Set up lora config or load pre-trained adapter
         config = LoraConfig(
-            r=self.config['train']['qlora']['rank'],
-            lora_alpha=self.config['train']['qlora']['lora_alpha'],
-            target_modules=self.config['train']['qlora']['target_modules'],
-            lora_dropout=self.config['train']['qlora']['lora_dropout'],
+            r=self.config['training']['qlora']['rank'],
+            lora_alpha=self.config['training']['qlora']['lora_alpha'],
+            target_modules=self.config['training']['qlora']['target_modules'],
+            lora_dropout=self.config['training']['qlora']['lora_dropout'],
             bias="none",
             task_type="CAUSAL_LM",
         )
@@ -82,17 +79,17 @@ class QloraTrainer_CS:
             model=model,
             train_dataset=train_data,
             args=transformers.TrainingArguments(
-                per_device_train_batch_size=4,
+                per_device_train_batch_size=self.config['training']['trainer_args']["per_device_train_batch_size"],
                 gradient_accumulation_steps=int(self.index),
-                warmup_steps=100,
-                num_train_epochs=1,
-                learning_rate=2e-4,
-                lr_scheduler_type='cosine',
-                fp16=True,
-                logging_steps=1,
-                output_dir=self.config['train']["trainer_output_dir"],
+                warmup_steps=self.config['training']['trainer_args']["warmup_steps"],
+                num_train_epochs=self.config['training']['trainer_args']["num_train_epochs"],
+                learning_rate=self.config['training']['trainer_args']["learning_rate"],
+                lr_scheduler_type=self.config['training']['trainer_args']["lr_scheduler_type"],
+                fp16=self.config['training']['trainer_args']["fp16"],
+                logging_steps=self.config['training']['trainer_args']["logging_steps"],
+                output_dir=self.config['training']['trainer_args']["trainer_output_dir"],
                 report_to="wandb",
-                save_steps=50,
+                save_steps=self.config['training']['trainer_args']["save_steps"],
             ),
             data_collator=transformers.DataCollatorForLanguageModeling(self.tokenizer, mlm=False),
         )
@@ -101,7 +98,7 @@ class QloraTrainer_CS:
 
         self.transformer_trainer.train()
 
-        model_save_path = f"{self.config['train']['model_output_dir']}/{self.config['train']['model_name']}_{str(self.index)}_adapter_test_graph"
+        model_save_path = f"{self.config['training']['model_saving']['model_output_dir']}/{self.config['training']['model_saving']['model_name']}_{str(self.index)}_adapter_test_graph"
         self.transformer_trainer.save_model(model_save_path)
 
         self.adapter_model = model
@@ -125,7 +122,7 @@ class QloraTrainer_CS:
     
     def _process_data_instruction(self):
         context_window = self.tokenizer.model_max_length
-        graph_data = nx.read_gexf(self.config["train"]["graph_path"], node_type=None, relabel=False, version='1.2draft')
+        graph_data = nx.read_gexf(self.config["training"]["graph_path"], node_type=None, relabel=False, version='1.2draft')
         raw_graph = graph_data
 
         test_set_size = len(graph_data.nodes()) // 10
@@ -241,7 +238,10 @@ class QloraTrainer_CS:
 
         print("Total prompts:", len(data_prompt))
         random.shuffle(data_prompt)
-        data_tokenized = [self.tokenizer(sample,  max_length=context_window, truncation=True) for sample in tqdm(data_prompt)]
+        if self.tokenizer.chat_template is None:
+            data_tokenized = [self.tokenizer(sample,  max_length=context_window, truncation=True) for sample in tqdm(data_prompt)]
+        else:
+            data_tokenized = [self.tokenizer.apply_chat_template(sample,  max_length=context_window, truncation=True, tokenize=False) for sample in tqdm(data_prompt)]
 
         return data_tokenized
     
@@ -255,8 +255,14 @@ class QloraTrainer_CS:
         prompt_input = prompt_input + "Title of Paper B: " + (data_point['t_title'] if data_point['t_title'] != None else 'Unknown') + "\n"
         prompt_input = prompt_input + "Abstract of Paper B: " + (data_point['t_abs'] if data_point['t_abs'] != None else 'Unknown') + "\n"
 
-        res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
-        res = f"{res}{data_point['label']}"
+        if self.tokenizer.chat_template is None:
+            res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
+            res = f"{res}{data_point['label']}"
+        else:
+            res = [
+                {"role": "user", "content": self.template["prompt_input"].format(instruction=instruction, input=prompt_input)},
+                {"role": "assistant", "content": data_point['label']}
+            ]
 
         return res
  
@@ -266,8 +272,14 @@ class QloraTrainer_CS:
         prompt_input = ""
         prompt_input = prompt_input + "Abstract: " + data_point['abs'] + "\n"
 
-        res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
-        res = f"{res}{data_point['title']}"
+        if self.tokenizer.chat_template is None:
+            res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
+            res = f"{res}{data_point['title']}"
+        else:
+            res = [
+                {"role": "user", "content": self.template["prompt_input"].format(instruction=instruction, input=prompt_input)},
+                {"role": "assistant", "content": data_point['title']}
+            ]
 
         return res
     
@@ -281,8 +293,14 @@ class QloraTrainer_CS:
         for i in range(len(data_point['sample_title'])):
             prompt_input = prompt_input + str(i) + '. ' + data_point['sample_title'][i] + "\n"
         
-        res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
-        res = f"{res}{data_point['right_title']}"
+        if self.tokenizer.chat_template is None:
+            res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
+            res = f"{res}{data_point['right_title']}"
+        else:
+            res = [
+                {"role": "user", "content": self.template["prompt_input"].format(instruction=instruction, input=prompt_input)},
+                {"role": "assistant", "content": data_point['right_title']}
+            ]
 
         return res
 
@@ -295,8 +313,14 @@ class QloraTrainer_CS:
         prompt_input = prompt_input + "Title of Paper B: " + (data_point['t_title'] if data_point['t_title'] != None else 'Unknown') + "\n"
         prompt_input = prompt_input + "Abstract of Paper B: " + (data_point['t_abs'] if data_point['t_abs'] != None else 'Unknown') + "\n"
 
-        res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
-        res = f"{res}{data_point['sentence']}"
+        if self.tokenizer.chat_template is None:
+            res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
+            res = f"{res}{data_point['sentence']}"
+        else:
+            res = [
+                {"role": "user", "content": self.template["prompt_input"].format(instruction=instruction, input=prompt_input)},
+                {"role": "assistant", "content": data_point['sentence']}
+            ]
 
         return res
     
@@ -309,8 +333,14 @@ class QloraTrainer_CS:
         split_abs = data_point['abs'][: int(0.3*len(data_point['abs']))]
         prompt_input = prompt_input + "Part of abstract: " + split_abs + "\n"
 
-        res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
-        res = f"{res}{data_point['abs']}"
+        if self.tokenizer.chat_template is None:
+            res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
+            res = f"{res}{data_point['abs']}"
+        else:
+            res = [
+                {"role": "user", "content": self.template["prompt_input"].format(instruction=instruction, input=prompt_input)},
+                {"role": "assistant", "content": data_point['abs']}
+            ]
 
         return res
         
@@ -323,8 +353,14 @@ class QloraTrainer_CS:
         # Reduce it to make it fit
         prompt_input = prompt_input[:int(context_window*2)]
         
-        res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
-        res = f"{res}{data_point['abs']}"
+        if self.tokenizer.chat_template is None:
+            res = self.template["prompt_input"].format(instruction=instruction, input=prompt_input)
+            res = f"{res}{data_point['abs']}"
+        else:
+            res = [
+                {"role": "user", "content": self.template["prompt_input"].format(instruction=instruction, input=prompt_input)},
+                {"role": "assistant", "content": data_point['abs']}
+            ]
 
         return res
 
