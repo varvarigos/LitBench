@@ -11,7 +11,7 @@
 
 ## Overview
 
-LitBench is a benchmarking framework designed to retrieve, process, and fine-tune LLMs on academic literature-related tasks. It leverages the arXiv Topics dataset—which provides structured topic information for papers—and the arXiv Topic Embeddings available on Hugging Face, which include three-level topic embeddings and aggregated representations. These embeddings are used in the retriever to find relevant papers and are also integrated into the constructed literature graph.
+LitBench is a benchmarking framework designed to retrieve, process, and fine-tune LLMs on academic literature-related tasks. It leverages the arXiv Topics dataset—which provides structured topic information for papers—and the arXiv Topic Embeddings, which contains their respective embeddings, available on Hugging Face. These embeddings are used in the retriever to find relevant papers and are also integrated into the constructed literature graph.
 
 1. **Retrieve relevant papers**: Given a user query, LitBench finds the most relevant papers by computing **cosine similarity** between the query and available academic papers.
 2. **Download and clean papers**: The selected papers are retrieved from **arXiv** and processed to extract structured and unstructured content.
