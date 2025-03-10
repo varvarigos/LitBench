@@ -11,7 +11,7 @@ Returns:
 """
 
 
-def intro_2_abs(usr_prompt, template, context_window):
+def intro_2_abs(usr_prompt, template, context_window, has_predefined_template=False):
     instruction = "Please generate the abstract of paper based on its introduction section."
 
     introduction = usr_prompt.split("Introduction: ")[1]
@@ -22,6 +22,12 @@ def intro_2_abs(usr_prompt, template, context_window):
     # Reduce it to make it fit
     prompt_input = prompt_input[:int(context_window*2)]
 
-    res = template["prompt_input"].format(instruction=instruction, input=prompt_input)
+    if has_predefined_template:
+        res = [
+            {"role": "system", "content": instruction},
+            {"role": "user", "content": prompt_input},
+        ]
+    else:
+        res = template["prompt_input"].format(instruction=instruction, input=prompt_input)
 
     return res
