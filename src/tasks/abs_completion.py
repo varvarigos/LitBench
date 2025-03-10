@@ -18,19 +18,12 @@ Returns:
 def abs_completion(usr_input, template, has_predefined_template=False):
     instruction = "Please complete the abstract of a paper."
 
-    title = usr_input.split("Title: ")[1].split("\n\n")[0]
-    abstract = usr_input.split("Abstract: ")[1]
-
-    prompt_input = ""
-    prompt_input = prompt_input + "Title: " + title + "\n"
-    prompt_input = prompt_input + "Part of abstract: " + abstract
-
     if has_predefined_template:
         res = [
             {"role": "system", "content": instruction},
-            {"role": "user", "content": prompt_input},
+            {"role": "user", "content": usr_input},
         ]
     else:
-        res = template["prompt_input"].format(instruction=instruction, input=prompt_input)
+        res = template["prompt_input"].format(instruction=instruction, input=usr_input)
 
     return res
