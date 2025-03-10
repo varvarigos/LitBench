@@ -9,7 +9,7 @@ Returns:
     str: The generated link prediction task based on the user input.
 """
 
-def link_pred(usr_input, template):
+def link_pred(usr_input, template, has_predefined_template=False):
     instruction = "Determine if paper A will cite paper B."
 
     title_A = usr_input.split("Title A: ")[1].split("\n\n")[0]
@@ -24,6 +24,13 @@ def link_pred(usr_input, template):
     prompt_input = prompt_input + "Abstract of Paper B: " + abstract_B + '\n'
 
     prompt_input = prompt_input + " Give me a direct answer of yes or no."
+    
+    if has_predefined_template:
+        res = [
+            {"role": "system", "content": instruction},
+            {"role": "user", "content": prompt_input},
+        ]
+    else:
+        res = template["prompt_input"].format(instruction=instruction, input=prompt_input)
 
-    res = template["prompt_input"].format(instruction=instruction, input=prompt_input)
     return res
