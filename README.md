@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-        🤗 <a href="https://huggingface.co/datasets/AliMaatouk/arXiv_Topics"> arXiv Topics Dataset</a>&nbsp| 🤗 <a href="https://huggingface.co/collections/AliMaatouk/tele-datasets-66df13c2c93721c02f38b8d0"> Datasets on HF</a>&nbsp | <a href="https://huggingface.co/datasets/AliMaatouk/arXiv-Topics-Embeddings"> arXiv Topics Dataset Embeddings</a>
+        🤗 <a href="https://huggingface.co/datasets/AliMaatouk/arXiv_Topics"> arXiv Topics Dataset</a>&nbsp| 🤗 | <a href="https://huggingface.co/datasets/AliMaatouk/arXiv-Topics-Embeddings"> arXiv Topics Dataset Embeddings</a>
 <br>
 
 
