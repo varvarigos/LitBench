@@ -1,25 +1,25 @@
-# **Bulk Evaluation for Literature-Based Tasks**
+# **Evaluation for Literature-Based Tasks (Without User Interface)**
 
 ## **Overview**
-`bulk_eval.py` is a script designed to **evaluate the performance of LLMs** on various literature-related tasks, including **citation sentence generation, link prediction, abstract completion, title generation, paper retrieval, and introduction-to-abstract generation**. The script provides a **batch evaluation pipeline** to assess models trained with **LitBench** datasets or other domain-specific literature datasets.
+`eval_noUI.py` is a script designed to **evaluate the performance of LLMs** on various literature-related tasks, including **citation sentence generation, link prediction, abstract completion, title generation, paper retrieval, and introduction-to-abstract generation**. The script provides a **batch evaluation pipeline** to assess models trained with **LitBench** datasets or other domain-specific literature datasets.
 
 It loads a **citation graph dataset** and constructs evaluation prompts for the defined tasks. The script then uses the specified LLM to generate predictions and compares them against ground-truth outputs using **BERTScore and accuracy metrics**.
 
 ---
 
 ## **Usage**
-To run `bulk_eval.py`, execute the following command:
+To run `eval_noUI.py`, execute the following command:
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python3.10 src/bulk/bulk_eval.py \
-    -config_path=conf/config_bulk_eval.yaml \
+CUDA_VISIBLE_DEVICES=0 python3.10 src/no_UI/eval_noUI.py \
+    -config_path=configs/config_noUI.yaml \
     -model=lora \
     -lorapath=models/llama_1b_qlora_uncensored_1_adapter_test_graph
 ```
 
 ## **Command-Line Arguments**
 
-- `config_path`: Path to the configuration file for bulk evaluation.
+- `config_path`: Path to the configuration file for evaluation.
 - `model`: Model type (e.g., lora).
 - `lorapath`: Path to the LLM model checkpoint.
 - `index`: Index of the checkpoint to use for evaluation.
