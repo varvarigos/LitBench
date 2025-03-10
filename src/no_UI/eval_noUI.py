@@ -507,7 +507,7 @@ if __name__ == "__main__":
             test_data.append(edge)
 
     
-    with open('conf/alpaca.json') as fp:
+    with open('configs/alpaca.json') as fp:
         template = json.load(fp)
     human_instruction = ['### Input:', '### Response:']
     
