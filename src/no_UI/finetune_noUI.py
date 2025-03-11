@@ -9,12 +9,20 @@ from peft import (LoraConfig, get_peft_model,
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 import argparse
 import wandb
-from utils.utils import read_yaml_file
+import yaml
 
+
+def read_yaml_file(file_path):
+    with open(file_path, 'r') as file:
+        try:
+            data = yaml.safe_load(file)
+            return data
+        except yaml.YAMLError as e:
+            print(f"Error reading YAML file: {e}")
 
 
 class QloraTrainer_CS:
-    def __init__(self, config: dict, index, use_predefined_graph=False):
+    def __init__(self, config: dict, index):
         self.config = config
         self.tokenizer = None
         self.base_model = None
@@ -23,7 +31,6 @@ class QloraTrainer_CS:
         self.index = index
         self.transformer_trainer = None
         self.test_data = None
-        self.use_predefined_graph = use_predefined_graph
 
         template_file_path = 'configs/alpaca.json'
         with open(template_file_path) as fp:
@@ -373,7 +380,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config = read_yaml_file(args.config_path)
-    trainer = QloraTrainer_CS(config, args.index, True)
+    trainer = QloraTrainer_CS(config, args.index)
 
     print("Load base model")
     trainer.load_base_model()
