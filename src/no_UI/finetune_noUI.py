@@ -252,7 +252,7 @@ class QloraTrainer_CS:
     
     
     def _generate_LP_prompt(self, data_point: dict):
-        instruction = "Determine if paper A will cite paper B."
+        instruction = "Determine if paper A will cite paper B.\n"
 
         prompt_input = ""
         prompt_input = prompt_input + "Title of Paper A: " + (data_point['s_title'] if data_point['s_title'] != None else 'Unknown') + "\n"
@@ -272,7 +272,7 @@ class QloraTrainer_CS:
         return res
  
     def _generate_abstract_2_title_prompt(self, data_point: dict):
-        instruction = "Please generate the title of paper based on its abstract."
+        instruction = "Please generate the title of paper based on its abstract.\n"
 
         prompt_input = ""
         prompt_input = prompt_input + "Abstract: " + data_point['abs'] + "\n"
@@ -289,7 +289,7 @@ class QloraTrainer_CS:
         return res
     
     def _generate_paper_retrieval_prompt(self, data_point: dict):
-        instruction = "Please select the paper that is more likely to be cited by paper A from candidate papers."
+        instruction = "Please select the paper that is more likely to be cited by paper A from candidate papers.\n"
         
         prompt_input = ""
         prompt_input = prompt_input + "Title of the Paper A: " + data_point['title'] + "\n"
@@ -310,7 +310,7 @@ class QloraTrainer_CS:
         return res
 
     def _generate_citation_sentence_prompt(self, data_point: dict):
-        instruction = "Please generate the citation sentence of how Paper A cites paper B in its related work section."
+        instruction = "Please generate the citation sentence of how Paper A cites paper B in its related work section.\n"
         
         prompt_input = ""
         prompt_input = prompt_input + "Title of Paper A: " + (data_point['s_title'] if data_point['s_title'] != None else 'Unknown') + "\n"
@@ -330,7 +330,7 @@ class QloraTrainer_CS:
         return res
     
     def _generate_abstract_completion_prompt(self, data_point: dict):
-        instruction = "Please complete the abstract of a paper."
+        instruction = "Please complete the abstract of a paper.\n"
 
         prompt_input = ""
         prompt_input = prompt_input + "Title: " + data_point['title'] if data_point['title'] != None else 'Unknown' + "\n"
@@ -350,7 +350,7 @@ class QloraTrainer_CS:
         return res
         
     def _generate_intro_2_abstract_prompt(self, data_point: dict, context_window):
-        instruction = "Please generate the abstract of paper based on its introduction section."
+        instruction = "Please generate the abstract of paper based on its introduction section.\n"
 
         prompt_input = ""
         prompt_input = prompt_input + "Introduction: " + data_point['intro'] + "\n"
