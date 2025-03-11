@@ -30,20 +30,24 @@ The script evaluates model performance across six key literature-based tasks:
     * Evaluates output coherence using BERTScore.
 
 2. Citation Link Prediction (test_LP)
-* Determines if Paper A is likely to cite Paper B based on their titles and abstracts.
-* Evaluates binary classification accuracy.
+    * Determines if Paper A is likely to cite Paper B based on their titles and abstracts.
+    * Evaluates binary classification accuracy.
+
 3. Abstract Completion (test_abs_completion)
-* Completes a partially given abstract using the model’s understanding.
-* Evaluates precision, recall, and F1-score using BERTScore.
+    * Completes a partially given abstract using the model’s understanding.
+    * Evaluates precision, recall, and F1-score using BERTScore.
+
 4. Title Generation (test_title_generate)
-* Predicts a paper’s title based on its abstract.
-* Evaluates BERTScore similarity with ground-truth titles.
+    * Predicts a paper’s title based on its abstract.
+    * Evaluates BERTScore similarity with ground-truth titles.
+
 5. Citation Recommendation (test_retrival_e)
-* Given a paper and a set of candidate papers, selects the one most likely to be cited.
-* Evaluates retrieval accuracy.
+    * Given a paper and a set of candidate papers, selects the one most likely to be cited.
+    * Evaluates retrieval accuracy.
+
 6. Introduction to Abstract (test_intro_2_abs)
-* Predicts a paper’s abstract based on its introduction section.
-* Evaluates BERTScore similarity.
+    * Predicts a paper’s abstract based on its introduction section.
+    * Evaluates BERTScore similarity.
 
 ---
 
