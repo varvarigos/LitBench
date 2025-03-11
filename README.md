@@ -23,8 +23,6 @@ LitBench is a benchmarking framework designed to retrieve, process, and fine-tun
    - **Edges representing citation relationships**
 4. **Fine-tune LLMs on graph-related tasks**: The constructed graph is used to develop and benchmark LLMs on **downstream literature tasks**, including **related work generation, citation prediction, and academic text analysis**.
 
-LitBench provides a comprehensive framework to **curate, analyze, and benchmark domain-specific LLMs** on literature-related tasks.
-
 <p align="center">
   <img src="img/arxiv_logo.jpeg" alt="arXiv Logo" width="220"/>
 </p>
