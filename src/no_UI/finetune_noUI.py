@@ -4,8 +4,7 @@ import random
 import transformers
 import networkx as nx
 from tqdm import tqdm
-from peft import (LoraConfig, get_peft_model,
-                  prepare_model_for_kbit_training)
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 import argparse
 import wandb
@@ -27,7 +26,6 @@ class QloraTrainer_CS:
         self.tokenizer = None
         self.base_model = None
         self.adapter_model = None
-        self.merged_model = None
         self.index = index
         self.transformer_trainer = None
         self.test_data = None
