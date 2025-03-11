@@ -241,10 +241,12 @@ class QloraTrainer_CS:
 
         print("Total prompts:", len(data_prompt))
         random.shuffle(data_prompt)
+
+
         if self.tokenizer.chat_template is None:
             data_tokenized = [self.tokenizer(sample,  max_length=context_window, truncation=True) for sample in tqdm(data_prompt)]
         else:
-            data_tokenized = [self.tokenizer.apply_chat_template(sample,  max_length=context_window, truncation=True, tokenize=False) for sample in tqdm(data_prompt)]
+            data_tokenized = [self.tokenizer.apply_chat_template(sample,  max_length=context_window, truncation=True, tokenize=True) for sample in tqdm(data_prompt)]
 
         return data_tokenized
 
