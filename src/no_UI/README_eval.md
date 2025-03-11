@@ -1,7 +1,7 @@
 # **Evaluation for Literature-Based Tasks (Without User Interface)**
 
 ## **Overview**
-`eval_noUI.py` is a script designed to **evaluate the performance of LLMs** on various literature-related tasks, including **citation sentence generation, link prediction, abstract completion, title generation, paper retrieval, and introduction-to-abstract generation**. The script provides a **batch evaluation pipeline** to assess models trained with **LitBench** datasets or other domain-specific literature datasets.
+[`eval_noUI.py`](src/no_UI/eval_noUI.py) is a script designed to **evaluate the performance of LLMs** on various literature-related tasks, including **citation sentence generation, link prediction, abstract completion, title generation, paper retrieval, and introduction-to-abstract generation**. The script provides a **batch evaluation pipeline** to assess models trained with **LitBench** datasets or other domain-specific literature datasets.
 
 It loads a **citation graph dataset** and constructs evaluation prompts for the defined tasks. The script then uses the specified LLM to generate predictions and compares them against ground-truth outputs using **BERTScore and accuracy metrics**.
 
