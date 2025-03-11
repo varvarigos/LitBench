@@ -26,8 +26,8 @@ python3.10 src/no_UI/eval_noUI.py \
 ## **Supported Evaluation Tasks**
 The script evaluates model performance across six key literature-based tasks:
 1. Citation Sentence Generation (test_sentence)
-* Generates a citation sentence describing how Paper A cites Paper B in the related work section.
-* Evaluates output coherence using BERTScore.
+    * Generates a citation sentence describing how Paper A cites Paper B in the related work section.
+    * Evaluates output coherence using BERTScore.
 
 2. Citation Link Prediction (test_LP)
 * Determines if Paper A is likely to cite Paper B based on their titles and abstracts.
