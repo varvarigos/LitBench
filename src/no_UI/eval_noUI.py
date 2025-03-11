@@ -200,7 +200,11 @@ def test_sentence():
         }
 
         prompt = _generate_citation_sentence_prompt(datapoint)
-        ans = get_llm_response(prompt, 'sentence')[0]['generated_text']
+        if tokenizer.chat_template is None:
+            ans = get_llm_response(prompt, 'sentence')[0]['generated_text']
+        else:
+            ans = get_llm_response(prompt, 'sentence')[0]['generated_text'][-1]['content']
+
         res = ans.strip().split(human_instruction[1])[-1]
 
         result_dict[(source, target)] = [source_title, source_abs, target_title, target_abs, citation_sentence, res]
@@ -238,7 +242,10 @@ def test_LP():
         }
 
         prompt = _generate_LP_prompt(datapoint)
-        ans = get_llm_response(prompt, 'LP')[0]['generated_text']
+        if tokenizer.chat_template is None:
+            ans = get_llm_response(prompt, 'LP')[0]['generated_text']
+        else:
+            ans = get_llm_response(prompt, 'LP')[0]['generated_text'][-1]['content']
 
         res = ans.strip().split(human_instruction[1])[-1]
 
@@ -269,7 +276,10 @@ def test_LP():
         }
 
         prompt = _generate_LP_prompt(datapoint)
-        ans = get_llm_response(prompt, 'LP')[0]['generated_text']
+        if tokenizer.chat_template is None:
+            ans = get_llm_response(prompt, 'LP')[0]['generated_text']
+        else:
+            ans = get_llm_response(prompt, 'LP')[0]['generated_text'][-1]['content']
 
         res = ans.strip().split(human_instruction[1])[-1]
 
@@ -302,7 +312,10 @@ def test_title_generate():
         datapoint = {'title':title, 'abs':abstract}
 
         prompt = _generate_abstract_2_title_prompt(datapoint)
-        ans = get_llm_response(prompt, 'title')[0]['generated_text']
+        if tokenizer.chat_template is None:
+            ans = get_llm_response(prompt, 'title')[0]['generated_text']
+        else:
+            ans = get_llm_response(prompt, 'title')[0]['generated_text'][-1]['content']
 
         res = ans.strip().split(human_instruction[1])[-1]
 
@@ -339,7 +352,10 @@ def test_abs_completion():
         datapoint = {'title':title, 'abs':abstract}
 
         prompt = _generate_abstract_completion_prompt(datapoint)
-        ans = get_llm_response(prompt, 'abstract')[0]['generated_text']
+        if tokenizer.chat_template is None:
+            ans = get_llm_response(prompt, 'abstract')[0]['generated_text']
+        else:
+            ans = get_llm_response(prompt, 'abstract')[0]['generated_text'][-1]['content']
 
         res = ans.strip().split(human_instruction[1])[-1]
 
@@ -383,7 +399,10 @@ def test_retrieval():
         }
 
         prompt = _generate_paper_retrieval_prompt(datapoint)
-        ans = get_llm_response(prompt, 'retrieval')[0]['generated_text']
+        if tokenizer.chat_template is None:
+            ans = get_llm_response(prompt, 'retrieval')[0]['generated_text']
+        else:
+            ans = get_llm_response(prompt, 'retrieval')[0]['generated_text'][-1]['content']
 
         res = ans.strip().split(human_instruction[1])[-1].lower()
         target_title = target_title.lower()
@@ -427,7 +446,10 @@ def test_intro_2_abs():
         datapoint = {'abs':abstract, 'intro':intro}
 
         prompt = _generate_intro_2_abstract_prompt(datapoint, tokenizer.model_max_length)
-        ans = get_llm_response(prompt, 'intro')[0]['generated_text']
+        if tokenizer.chat_template is None:
+            ans = get_llm_response(prompt, 'intro')[0]['generated_text']
+        else:
+            ans = get_llm_response(prompt, 'intro')[0]['generated_text'][-1]['content']
 
         res = ans.strip().split(human_instruction[1]+'\n')[-1]
 
@@ -605,7 +627,7 @@ if __name__ == "__main__":
         "abstract": {
             "precision": abstract_p,
             "recall": abstract_r,
-            "f1": abstract_f
+            "f1": abstract_
         },
         "intro": {
             "precision": intro_p,
