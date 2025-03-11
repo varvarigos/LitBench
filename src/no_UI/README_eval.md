@@ -11,18 +11,15 @@ It loads a **citation graph dataset** and constructs evaluation prompts for the 
 To run `eval_noUI.py`, execute the following command:
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python3.10 src/no_UI/eval_noUI.py \
+python3.10 src/no_UI/eval_noUI.py \
     -config_path=configs/config_noUI.yaml \
-    -model=lora \
-    -lorapath=models/llama_1b_qlora_uncensored_1_adapter_test_graph
+    -adapter_path=models/llama_1b_qlora_uncensored_1_adapter_test_graph
 ```
 
 ## **Command-Line Arguments**
 
 - `config_path`: Path to the configuration file for evaluation.
-- `model`: Model type (e.g., lora).
-- `lorapath`: Path to the LLM model checkpoint.
-- `index`: Index of the checkpoint to use for evaluation.
+- `adapter_path`: Path to the LLM model checkpoint.
 
 ---
 
