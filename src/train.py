@@ -93,7 +93,7 @@ class QloraTrainer_CS:
 
         self.transformer_trainer.train()
 
-        model_save_path = f"{self.config['model_saving']['model_output_dir']}/{self.config['model_saving']['model_name']}_{self.config['model_saving']['index']}_adapter_test_graph"
+        model_save_path = f"{self.config['model_saving']['model_output_dir']}/{self.config['model_saving']['model_name']}"
         self.transformer_trainer.save_model(model_save_path)
 
         self.adapter_model = model
