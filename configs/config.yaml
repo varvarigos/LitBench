@@ -13,7 +13,6 @@ retriever:
 
 inference:
   base_model: meta-llama/Meta-Llama-3-8B
-  pretrained_model: "models/Robotics/Meta-LLama-3-8B-Quantative-Robotics" # used only if training option is false
   generation_args:
     max_new_tokens: 1000
     do_sample: True
