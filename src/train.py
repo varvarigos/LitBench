@@ -75,7 +75,7 @@ class QloraTrainer_CS:
             train_dataset=train_data,
             args=transformers.TrainingArguments(
                 per_device_train_batch_size=self.config["training"]['trainer_args']["per_device_train_batch_size"],
-                gradient_accumulation_steps=self.config['model_saving']['index'],
+                gradient_accumulation_steps=self.config["training"]['trainer_args']['index'],
                 warmup_steps=self.config["training"]['trainer_args']["warmup_steps"],
                 num_train_epochs=self.config["training"]['trainer_args']["num_train_epochs"],
                 learning_rate=self.config["training"]['trainer_args']["learning_rate"],
