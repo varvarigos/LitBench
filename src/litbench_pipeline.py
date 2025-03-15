@@ -372,7 +372,7 @@ def predict(message, history, selected_task):
                     advanced_tasks_out = influential_papers(message, graph)
             elif selected_task == "Related Work Generation":
                 adapter_path = (
-                    f"{config['model_saving']['model_output_dir']}/{config['model_saving']['model_name']}_adapter_test_graph"
+                    f"{config['model_saving']['model_output_dir']}/{config['model_saving']['model_name']}"
                     if train_model.value else config['inference']['base_model']
                 )
                 if download_papers.value:
@@ -571,7 +571,7 @@ def predict(message, history, selected_task):
 
             yield "🎉 Model training complete! Please provide your task prompt."
 
-            adapter_path = f"{config['model_saving']['model_output_dir']}/{config['model_saving']['model_name']}_adapter_test_graph"
+            adapter_path = f"{config['model_saving']['model_output_dir']}/{config['model_saving']['model_name']}"
             peft_model = PeftModel.from_pretrained(model, adapter_path, torch_dtype=torch.float16)
 
             # change the global model with peft model
