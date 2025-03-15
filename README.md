@@ -21,7 +21,6 @@
    - **Citation sentences**
    - **Full unstructured content (if desired)**
    - **Edges representing citation relationships**
-4. **Fine-tune LLMs on graph-related tasks**: The constructed graph is used to develop and benchmark LLMs on **downstream literature tasks**, including **citation prediction and academic text analysis**, and it also supports applications enabled using these downstream tasks, such as related work generation and influential paper fetching.
 4. **Fine-tune LLMs on graph-related tasks**: The constructed graph is used to develop and benchmark LLMs on **downstream literature tasks**, such as **citation prediction and introduction to abstract generation**, while also supporting applications built on these tasks, including **related work generation and influential paper retrieval**.
 
 <p align="center">
