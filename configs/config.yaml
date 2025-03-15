@@ -35,6 +35,7 @@ training:
     logging_steps: 1
     save_steps: 50
     trainer_output_dir: trainer_outputs/
+    index: 1
   tokenizer:
     max_length: 1024
   qlora:
@@ -51,4 +52,3 @@ training:
 model_saving:
   model_name: llama_fine-tuned
   model_output_dir: models   # model saved in {model_output_dir}/{model_name} # model saved in {model_output_dir}/{model_name} after fine-tuning completion
-  index: 1
