@@ -638,12 +638,10 @@ if __name__ == "__main__":
 
     graph_name = graph_path.split('/')[-1].split('.')[0]
 
-    name_save = config["eval"]["model_name"]
-
     try:
         os.mkdir("eval")
     except:
         pass
 
-    with open(f"eval/{name_save}_{graph_name}_results.json", "w") as f:
+    with open(f"eval/{graph_name}_results.json", "w") as f:
         json.dump(results, f)
