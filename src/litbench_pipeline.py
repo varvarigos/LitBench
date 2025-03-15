@@ -322,7 +322,7 @@ def predict(message, history, selected_task):
         if not download_papers.value and not train_model.value:
             yield "✅ Using model from configuration file..."
 
-            adapter_path = config["inference"]["pretrained_model"]
+            adapter_path = config["inference"]["base_model"]
             peft_model = PeftModel.from_pretrained(model, adapter_path, torch_dtype=torch.float16)
 
             # change the global model with peft model
@@ -373,7 +373,7 @@ def predict(message, history, selected_task):
             elif selected_task == "Related Work Generation":
                 adapter_path = (
                     f"{config['model_saving']['model_output_dir']}/{config['model_saving']['model_name']}_{config['model_saving']['index']}_adapter_test_graph"
-                    if train_model.value else config['inference']['pretrained_model']
+                    if train_model.value else config['inference']['base_model']
                 )
                 if download_papers.value:
                     advanced_tasks_out = gen_related_work(message, gexf_file, adapter_path)
