@@ -1,4 +1,4 @@
-# **Fine-Tuning for Literature-Based LLMs (without User Interface)**
+# **1. Fine-Tuning for Literature-Based LLMs (without User Interface)**
 
 ## **Overview**
 [`finetune_noUI.py`](finetune_noUI.py) is a script designed to **fine-tune large language models (LLMs) on literature-based tasks** using **QLoRA**. The script supports **training domain-specific models** for citation reasoning, abstract generation, retrieval, and more. It leverages **LoRA adapters** to enable efficient fine-tuning on consumer-grade GPUs.
@@ -41,7 +41,7 @@ Ensure you have the required Python libraries installed, following the instructi
 
 ---
 
-# **Evaluation for Literature-Based Tasks (Without User Interface)**
+# **2. Evaluation for Literature-Based Tasks (Without User Interface)**
 
 ## **Overview**
 [`eval_noUI.py`](eval_noUI.py) is a script designed to **evaluate the performance of LLMs** on various literature-related tasks, including **citation sentence generation, link prediction, abstract completion, title generation, paper retrieval, and introduction-to-abstract generation**. The script provides a **batch evaluation pipeline** to assess models trained with **LitBench** datasets or other domain-specific literature datasets.
