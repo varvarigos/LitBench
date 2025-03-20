@@ -11,17 +11,17 @@
 
 ## Overview
 
-**LitBench** is a benchmarking framework tailored to retrieve, process, and fine-tune LLMs on **academic literature-related tasks**, ensuring that all operations—from paper retrieval to graph construction and model fine-tuning—are **centered around the user’s chosen domain**, however niche or abstract it may be. At its core, LitBench leverages the arXiv Topics dataset, which provides structured topic metadata for papers, along with the corresponding arXiv Topic Embeddings, available on Hugging Face. These embeddings are integral to the retriever, ensuring that papers most relevant to the user’s domain are identified for the graph construction and LLM fine-tuning.
+**LitBench** is a comprehensive framework tailored to retrieve, process, and fine-tune LLMs on **academic literature-related tasks** centered around the user’s chosen domain, **however niche the domain may be**. At its core, LitBench incorporates several steps:
 
-1. **Retrieve relevant papers**: Given any user input domain—no matter how specific, interdisciplinary, or conceptual-LitBench finds the most relevant papers by computing **cosine similarity** between the query and available academic papers.
-2. **Download and clean papers**: The selected papers, directly relevant to the user's chosen domain, are retrieved from **arXiv** and processed to extract structured and unstructured content.
-3. **Construct a domain-specific literature graph**: The generated graph is entirely tailored to the user’s research focus. It contains key attributes such as:
+1. **Retrieve relevant papers**: Given any user input domain—no matter how specific or interdisciplinary—LitBench leverages the <a href="https://huggingface.co/datasets/AliMaatouk/arXiv_Topics">arXiv Topics</a> dataset to find the most relevant papers to the user's chosen domain.
+2. **Download and clean papers**: The selected papers are retrieved from **arXiv** and processed to extract structured and unstructured content through an extensive cleaning pipeline.
+3. **Construct a domain-specific literature graph**: Using the downloaded papers, a graph tailored to the user’s chosen domain is constructed, containing several key attributes such as:
    - **Title, Abstract, Introduction**
    - **Topics of the paper**
    - **Citation sentences**
    - **Full unstructured content (if desired)**
    - **Edges representing citation relationships**
-4. **Fine-tune LLMs on graph-related tasks**: The constructed graph is used to develop and benchmark LLMs on **downstream literature tasks**, such as **citation prediction and introduction to abstract generation**, while also supporting applications built on these tasks, including **related work generation and influential paper retrieval**.
+4. **Fine-tune LLMs on graph-related tasks**: The constructed graph is used to fine-tune LLMs on **downstream literature tasks**, such as **citation prediction** and **introduction-to-abstract generation**, while also supporting applications built on these tasks, including **related work generation** and **influential paper retrieval**.
 
 <p align="center">
   <img src="img/arxiv_logo.jpeg" alt="arXiv Logo" width="220"/>
