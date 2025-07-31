@@ -2,36 +2,35 @@ from train import *
 from utils.utils import *
 from utils.graph_utils import *
 from utils.gradio_utils import *
+from tasks.link_pred import link_pred
 from retriever.retriever import retriever
+from tasks.intro_2_abs import intro_2_abs
 from tasks.abs_2_title import abs_2_title
 from tasks.abs_completion import abs_completion
-from tasks.citation_sentence import citation_sentence
-from tasks.intro_2_abs import intro_2_abs
-from tasks.link_pred import link_pred
 from tasks.paper_retrieval import paper_retrieval
-from tasks.influential_papers import influential_papers
 from tasks.gen_related_work import gen_related_work
-import random
-import json
+from tasks.citation_sentence import citation_sentence
+from tasks.influential_papers import influential_papers
+
 import os
 import re
-import networkx as nx
-import tarfile
 import gzip
+import json
 import time
+import torch
+import wandb
+import random
+import signal
+import tarfile
+import gradio as gr
+import networkx as nx
 import urllib.request
 from tqdm import tqdm
 from colorama import Fore
-import wandb
-import gradio as gr
-from transformers import AutoModelForCausalLM, AutoTokenizer, StoppingCriteriaList, TextIteratorStreamer, pipeline
 from threading import Thread
-import signal
-import gzip
-import time
-import torch
-from peft.peft_model import PeftModel
 from datasets import load_dataset
+from peft.peft_model import PeftModel
+from transformers import AutoModelForCausalLM, AutoTokenizer, StoppingCriteriaList, TextIteratorStreamer, pipeline
 
 
 
@@ -743,4 +742,4 @@ if __name__ == "__main__":
         
 
     # Launch the interface
-    demo.launch(server_port=7880)
+    demo.launch()
