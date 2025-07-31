@@ -1,13 +1,13 @@
-from transformers import AutoTokenizer, AutoModel
-from sklearn.metrics.pairwise import cosine_similarity
+import os
 import json
 import torch
-from tqdm import tqdm
-import os
-import pandas as pd
 import numpy as np
+import pandas as pd
+from tqdm import tqdm
 from datasets import load_dataset
 from utils.utils import read_yaml_file
+from transformers import AutoTokenizer, AutoModel
+from sklearn.metrics.pairwise import cosine_similarity
 
 
 def generate_topic_level_embeddings(model, tokenizer, paper_list, tmp_id_2_abs):
