@@ -1,15 +1,15 @@
-import sys
-import regex
-import yaml
-import shutil
-import bibtexparser
-from charset_normalizer import from_path
-from langdetect import detect
 import os
+import re
+import sys
+import yaml
+import regex
+import shutil
 import subprocess
 import numpy as np
+import bibtexparser
 import networkx as nx
-import re
+from langdetect import detect
+from charset_normalizer import from_path
 
 
 def is_venv():
