@@ -70,7 +70,7 @@ The LitBench user interface consists of two main stages: **preferences selection
 
 ### **1. Setting Preferences**
 Upon launching the interface, users are first directed to the preferences page, where they must specify:
-- Whether to **download** new papers and construct a dataset from scratch, otherwise use a pre-defined dataset set from the config file.
+- Whether to **download** new papers and construct a dataset from scratch, or use a pre-defined dataset set from the config file.
 - Whether to **train the model** on the retrieved/predetermined dataset or use a pre-trained model from the config file.
 
 Once preferences are set, users are directed to the chatbot interface.
@@ -80,7 +80,7 @@ After setting preferences:
 - If **training is selected**, users will first be prompted to specify their domain of interest before proceeding.
 - If **no training is selected**, users will be immediately prompted to provide their task prompt.
 
-Once relevant papers are retrieved, downloaded, and cleaned (if `download=True`), and the model is fine-tuned (if training is enabled), users will be prompted to **enter their task prompt**.
+Once relevant papers are retrieved, downloaded, and cleaned (if `download=True`), and the model is fine-tuned (if `train=True`), users will be prompted to **enter their task prompt**.
 
 ### **3. Selecting a Task**
 The UI provides a **dropdown menu** with eight predefined literature tasks. If your task corresponds to one of these, please select it from the dropdown. Each task has a **specific input format**, which you can find in the docs/tasks/ directory.
