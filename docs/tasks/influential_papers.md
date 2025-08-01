@@ -17,7 +17,7 @@ Number of papers to consider: <K>
 Number of papers to consider: 3
 ```
 
-This formatted prompt is then used as input for the model to generate a ranked list of the most influential papers.
+This formatted prompt is then used as input to the model to generate a ranked list of the most influential papers.
 
 ### **Example Output**
 ```
