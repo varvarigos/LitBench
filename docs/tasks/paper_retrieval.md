@@ -30,4 +30,4 @@ candidate papers:
 2. A Comparison of Shortest Path Algorithms
 ```
 
-This formatted prompt is then used as input for the model to select the **most relevant paper** that Paper A is likely to cite.
+This formatted prompt is then used as input to the model to select the **most relevant paper** that Paper A is likely to cite.
