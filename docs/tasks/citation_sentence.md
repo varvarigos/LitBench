@@ -26,4 +26,4 @@ Title of Paper B: Image Style Transfer Using Convolutional Neural Networks
 Abstract of Paper B: We describe a method for transferring the style of one image onto the content of another image using convolutional neural networks. The method is based on matching the feature representations of the content and style images in a high-level convolutional neural network.
 ```
 
-This formatted prompt is then used as input for the model to generate a **citation sentence** describing how **Paper A references Paper B**.
+This formatted prompt is then used as input to the model to generate a **citation sentence** describing how **Paper A references Paper B**.
