@@ -17,4 +17,4 @@ Abstract: <abstract>
 Abstract: This paper investigates the frequency behavior in spontaneous connected speech of two optional syntactic processes, particle movement and complementizer deletion. It shows them to be sensitive both to internal linguistic factors and to perceived norms of the standard language. It further compares the pattern found in usage with answers to a brief prescriptive grammatical questionnaire, where it finds parallelism. There is also a result of interest to the general theory of quantitative variation in an interaction found between an internal semantic effect and the external sociolinguistic one.
 ```
 
-This formatted prompt is then used as input for the model to generate the predicted title of the paper.
+This formatted prompt is then used as input to the model to generate the predicted title of the paper.
