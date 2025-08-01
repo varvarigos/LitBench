@@ -17,4 +17,4 @@ Introduction: <introduction text>
 Introduction: This section provides an overview of the research problem and the motivation for the study. It outlines the objectives of the study and the significance of the research. The introduction also presents a brief review of the literature and the research gap that the study aims to address.
 ```
 
-This formatted prompt is then used as input for the model to generate the predicted abstract of the paper.
+This formatted prompt is then used as input to the model to generate the predicted abstract of the paper.
