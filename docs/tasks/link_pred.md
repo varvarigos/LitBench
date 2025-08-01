@@ -31,4 +31,4 @@ After receiving this input, the model will analyze the relationship between **Pa
 - **"Yes"** → If Paper A is likely to cite Paper B.
 - **"No"** → If Paper A is unlikely to cite Paper B.
 
-This formatted prompt is then used as input for the model to determine the citation relationship.
+This formatted prompt is then used as input to the model to determine the citation relationship.
