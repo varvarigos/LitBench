@@ -20,4 +20,4 @@ Title: Attention Is All You Need
 Part of abstract: The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration.
 ```
 
-This formatted prompt is then used as input for the model to generate the completed abstract.
+This formatted prompt is then used as input to the model to generate the completed abstract.
