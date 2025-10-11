@@ -627,7 +627,7 @@ if __name__ == "__main__":
         "abstract": {
             "precision": abstract_p,
             "recall": abstract_r,
-            "f1": abstract_
+            "f1": abstract_f
         },
         "intro": {
             "precision": intro_p,
